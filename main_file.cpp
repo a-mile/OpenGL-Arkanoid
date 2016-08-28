@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "shaderprogram.h"
@@ -13,24 +14,111 @@ ShaderProgram *shaderProgram;
 GLuint bufVertices; 
 GLuint bufColors;
 GLuint vao;
-int vertexCount = 3;
+int vertexCount = 36;
+float speed = 0;
 
 GLfloat vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f
-}; 
+    -0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f, -0.5f, 
+     0.5f,  0.5f, -0.5f, 
+     0.5f,  0.5f, -0.5f, 
+    -0.5f,  0.5f, -0.5f, 
+    -0.5f, -0.5f, -0.5f, 
+
+    -0.5f, -0.5f,  0.5f, 
+     0.5f, -0.5f,  0.5f, 
+     0.5f,  0.5f,  0.5f, 
+     0.5f,  0.5f,  0.5f, 
+    -0.5f,  0.5f,  0.5f, 
+    -0.5f, -0.5f,  0.5f, 
+
+    -0.5f,  0.5f,  0.5f,  
+    -0.5f,  0.5f, -0.5f,  
+    -0.5f, -0.5f, -0.5f,  
+    -0.5f, -0.5f, -0.5f,  
+    -0.5f, -0.5f,  0.5f,  
+    -0.5f,  0.5f,  0.5f,  
+
+     0.5f,  0.5f,  0.5f,  
+     0.5f,  0.5f, -0.5f,  
+     0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f,  0.5f,  
+     0.5f,  0.5f,  0.5f,  
+
+    -0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f,  0.5f,  
+     0.5f, -0.5f,  0.5f,  
+    -0.5f, -0.5f,  0.5f,  
+    -0.5f, -0.5f, -0.5f,  
+
+    -0.5f,  0.5f, -0.5f,  
+     0.5f,  0.5f, -0.5f,  
+     0.5f,  0.5f,  0.5f,  
+     0.5f,  0.5f,  0.5f,  
+    -0.5f,  0.5f,  0.5f,  
+    -0.5f,  0.5f, -0.5f
+};
 
 GLfloat colors[] = {
-    1.0f, 1.0f, 0.0f,
-     1.0f, 0.0f, 1.0f,
-     0.0f,  1.0f, 0.0f
+    -0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f, -0.5f, 
+     0.5f,  0.5f, -0.5f, 
+     0.5f,  0.5f, -0.5f, 
+    -0.5f,  0.5f, -0.5f, 
+    -0.5f, -0.5f, -0.5f, 
+
+    -0.5f, -0.5f,  0.5f, 
+     0.5f, -0.5f,  0.5f, 
+     0.5f,  0.5f,  0.5f, 
+     0.5f,  0.5f,  0.5f, 
+    -0.5f,  0.5f,  0.5f, 
+    -0.5f, -0.5f,  0.5f, 
+
+    -0.5f,  0.5f,  0.5f,  
+    -0.5f,  0.5f, -0.5f,  
+    -0.5f, -0.5f, -0.5f,  
+    -0.5f, -0.5f, -0.5f,  
+    -0.5f, -0.5f,  0.5f,  
+    -0.5f,  0.5f,  0.5f,  
+
+     0.5f,  0.5f,  0.5f,  
+     0.5f,  0.5f, -0.5f,  
+     0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f,  0.5f,  
+     0.5f,  0.5f,  0.5f,  
+
+    -0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f, -0.5f,  
+     0.5f, -0.5f,  0.5f,  
+     0.5f, -0.5f,  0.5f,  
+    -0.5f, -0.5f,  0.5f,  
+    -0.5f, -0.5f, -0.5f,  
+
+    -0.5f,  0.5f, -0.5f,  
+     0.5f,  0.5f, -0.5f,  
+     0.5f,  0.5f,  0.5f,  
+     0.5f,  0.5f,  0.5f,  
+    -0.5f,  0.5f,  0.5f,  
+    -0.5f,  0.5f, -0.5f
 };
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {    
-    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    	glfwSetWindowShouldClose(window, GL_TRUE);
+    if(action == GLFW_PRESS)
+    {   if(key == GLFW_KEY_ESCAPE)
+    	    glfwSetWindowShouldClose(window, GL_TRUE);
+        if(key == GLFW_KEY_LEFT)
+            speed = 6;
+        if(key == GLFW_KEY_RIGHT)
+            speed = -6;
+    }
+    if(action == GLFW_RELEASE)
+    {
+        speed = 0;
+    }
 } 
 
 GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
@@ -50,8 +138,47 @@ void assignVBOtoAttribute(ShaderProgram *shaderProgram,char* attributeName, GLui
 	glVertexAttribPointer(location,vertexSize,GL_FLOAT, GL_FALSE, 0, NULL); 
 }
 
+void freeOpenGLProgram() {
+	delete shaderProgram; 
+	
+	glDeleteVertexArrays(1,&vao); //Usunięcie vao
+	glDeleteBuffers(1,&bufVertices); //Usunięcie VBO z wierzchołkami
+	glDeleteBuffers(1,&bufColors); //Usunięcie VBO z kolorami				
+}
+
+void drawObject(GLuint vao, ShaderProgram *shaderProgram, glm::mat4 mP, glm::mat4 mV, glm::mat4 mM) {	
+	shaderProgram->use();
+		
+	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(mP));
+	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(mV));
+	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));			
+	
+	glBindVertexArray(vao);
+	
+	glDrawArrays(GL_TRIANGLES,0,vertexCount);
+		
+	glBindVertexArray(0);
+}
+
+void drawScene(GLFWwindow* window, float position) {	
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+	glm::mat4 P = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f); 
+	
+	glm::mat4 V = glm::lookAt(
+		glm::vec3(0.0f, 0.0f, -10.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f));
+		
+	glm::mat4 M = glm::mat4(1.0f);  
+    M = glm::translate(M, glm::vec3(position,0.0f,0.0f));
+		
+	drawObject(vao,shaderProgram,P,V,M);
+		
+	glfwSwapBuffers(window);
+}
+
 int main(){
-    
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -68,6 +195,7 @@ int main(){
     }
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
+    glEnable(GL_DEPTH_TEST);
 
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK)
@@ -95,24 +223,18 @@ int main(){
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
+    float position = 0;
+
     while(!glfwWindowShouldClose(window))
     {
-        glClear(GL_COLOR_BUFFER_BIT);
-        shaderProgram->use();
-
-        GLfloat timeValue = glfwGetTime();
-        GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
-        GLint vertexColorLocation = shaderProgram->getUniformLocation("ourColor");
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-
-        glBindVertexArray(vao);
-	    glDrawArrays(GL_TRIANGLES,0,vertexCount);
-	    glBindVertexArray(0);
-
-        glfwSwapBuffers(window);
+        position += speed * glfwGetTime();
+        glfwSetTime(0);
+        drawScene(window,position);
         glfwPollEvents();
     }
 
+    freeOpenGLProgram();
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
