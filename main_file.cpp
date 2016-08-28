@@ -242,15 +242,36 @@ float normals[]={
 			};
 
 
+glm::mat4 leftWallModel = glm::mat4(1.0f);
+glm::mat4 rightWallModel = glm::mat4(1.0f);
+glm::mat4 upperWallModel = glm::mat4(1.0f);
+glm::mat4 P = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.2f, 200.0f); 		
+glm::mat4 V = glm::lookAt(
+		glm::vec3(0.0f, -30.0f, -100.0f),
+		glm::vec3(0.0f, 20.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f));
+float minX;
+float maxX;	
+bool left = true;
+bool right = true;
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {    
     if(action == GLFW_PRESS)
     {   if(key == GLFW_KEY_ESCAPE)
     	    glfwSetWindowShouldClose(window, GL_TRUE);
         if(key == GLFW_KEY_LEFT)
-            speed = 6;
+		{		
+			right = true;
+			if(left)
+            	speed = 60;
+		}
         if(key == GLFW_KEY_RIGHT)
-            speed = -6;
+		{
+			left = true;
+			if(right)
+            	speed = -60;
+		}
     }
     if(action == GLFW_RELEASE)
     {
@@ -284,13 +305,14 @@ void freeOpenGLProgram() {
     glDeleteBuffers(1,&bufNormals);				
 }
 
-void drawObject(GLuint vao, ShaderProgram *shaderProgram, glm::mat4 mP, glm::mat4 mV, glm::mat4 mM) {	
+void drawObject(GLuint vao, ShaderProgram *shaderProgram, glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color) {	
 	shaderProgram->use();
 		
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(mP));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(mV));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));	
-    glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,0,-5,1);		
+    glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,-30,-100,1);
+	glUniform4fv(shaderProgram->getUniformLocation("color"),1, glm::value_ptr(color));		
 	
 	glBindVertexArray(vao);
 	
@@ -301,19 +323,48 @@ void drawObject(GLuint vao, ShaderProgram *shaderProgram, glm::mat4 mP, glm::mat
 
 void drawScene(GLFWwindow* window, float position) {	
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+			
+	glm::mat4 M = glm::mat4(1.0f);      
+	M = glm::translate(M, glm::vec3(position,-29.0f,0.0f));	
+	M = glm::scale(M, glm::vec3(6.0f,1.0f,1.0f));
 
-	glm::mat4 P = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f); 
-	
-	glm::mat4 V = glm::lookAt(
-		glm::vec3(0.0f, 0.0f, -10.0f),
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f));
+	float modelMinX = (M*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
+	float modelMaxX = (M*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
+	for(int i=4; i<vertexCount*4 - 3; i+=4)
+	{
+		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
+		glm::vec4 position = M*vertex;
+		if(position.x < modelMinX)
+		{
+			modelMinX = position.x;
+		}
+		if(position.x > modelMaxX)
+		{
+			modelMaxX = position.x;
+		}
+	}
+
+	if(modelMaxX >= minX) 
+	{
+		M = glm::mat4(1.0f);      
+		M = glm::translate(M, glm::vec3(42.0f,-29.0f,0.0f));
+		M = glm::scale(M, glm::vec3(6.0f,1.0f,1.0f));
+		speed = 0;			
+		left = false;
+	}
+	if(modelMinX <= maxX)
+	{
+		M = glm::mat4(1.0f);      
+		M = glm::translate(M, glm::vec3(-42.0f,-29.0f,0.0f));
+		M = glm::scale(M, glm::vec3(6.0f,1.0f,1.0f));
+		speed = 0;
+		right = false;		
+	}
 		
-	glm::mat4 M = glm::mat4(1.0f);  
-    //M = glm::scale(M, glm::vec3(1.0f,10.0f,1.0f));
-    M = glm::translate(M, glm::vec3(position,0.0f,0.0f));
-		
-	drawObject(vao,shaderProgram,P,V,M);
+	drawObject(vao,shaderProgram,P,V,M, glm::vec4(1.0f,0.0f,0.0f,1.0f));
+    drawObject(vao,shaderProgram,P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	 
+    drawObject(vao,shaderProgram,P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	
+    drawObject(vao,shaderProgram,P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));
 		
 	glfwSwapBuffers(window);
 }
@@ -357,13 +408,45 @@ int main(){
     glGenVertexArrays(1,&vao); 
 	glBindVertexArray(vao);
 
-    assignVBOtoAttribute(shaderProgram,"position",bufVertices,4); 
-	assignVBOtoAttribute(shaderProgram,"color",bufColors,4);
+    assignVBOtoAttribute(shaderProgram,"position",bufVertices,4); 	
     assignVBOtoAttribute(shaderProgram,"normal",bufNormals,4);
    
     glBindVertexArray(0);    
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	
+    upperWallModel = glm::translate(upperWallModel, glm::vec3(0.0f,70.0f,0.0f));
+	upperWallModel = glm::scale(upperWallModel, glm::vec3(50.0f,1.0f,1.0f));	
+	leftWallModel = glm::translate(leftWallModel, glm::vec3(49.0f,20.0f,0.0f));
+    leftWallModel = glm::scale(leftWallModel, glm::vec3(1.0f,50.0f,1.0f)); 	
+	rightWallModel = glm::translate(rightWallModel, glm::vec3(-49.0f,20.0f,0.0f));
+    rightWallModel = glm::scale(rightWallModel, glm::vec3(1.0f,50.0f,1.0f));   
+
+	minX = (leftWallModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
+	for(int i=4; i<vertexCount*4 - 3; i+=4)
+	{
+		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
+		glm::vec4 position = leftWallModel*vertex;
+		if(position.x < minX)
+		{
+			minX = position.x;
+		}
+	}
+	
+	std::cout<<minX<<std::endl;
+
+	maxX = (rightWallModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
+	for(int i=4; i<vertexCount*4 - 3; i+=4)
+	{
+		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
+		glm::vec4 position = rightWallModel*vertex;
+		if(position.x > maxX)
+		{
+			maxX = position.x;
+		}
+	}
+	
+	std::cout<<maxX<<std::endl;
 
     float position = 0;
 
@@ -371,7 +454,7 @@ int main(){
     {
         position += speed * glfwGetTime();
         glfwSetTime(0);
-        drawScene(window,position);
+        drawScene(window,position);		
         glfwPollEvents();
     }
 
