@@ -13,97 +13,234 @@ const GLuint WIDTH = 800, HEIGHT = 600;
 ShaderProgram *shaderProgram;
 GLuint bufVertices; 
 GLuint bufColors;
+GLuint bufNormals;
 GLuint vao;
 int vertexCount = 36;
 float speed = 0;
 
-GLfloat vertices[] = {
-    -0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f, -0.5f, 
-     0.5f,  0.5f, -0.5f, 
-     0.5f,  0.5f, -0.5f, 
-    -0.5f,  0.5f, -0.5f, 
-    -0.5f, -0.5f, -0.5f, 
+float vertices[]={
+				1.0f,-1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f,-1.0f,1.0f,
+				-1.0f,-1.0f,-1.0f,1.0f,
+				
+				1.0f,-1.0f,-1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f,-1.0f,1.0f,
+				
+				
+				-1.0f,-1.0f, 1.0f,1.0f,	
+				1.0f, 1.0f, 1.0f,1.0f,
+				1.0f,-1.0f, 1.0f,1.0f,
+				
+				-1.0f,-1.0f, 1.0f,1.0f,
+				-1.0f, 1.0f, 1.0f,1.0f,
+				1.0f, 1.0f, 1.0f,1.0f,
+				
+				1.0f,-1.0f, 1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+				1.0f,-1.0f,-1.0f,1.0f,
+				
+				1.0f,-1.0f, 1.0f,1.0f,
+				1.0f, 1.0f, 1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+				
+				-1.0f,-1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f, 1.0f,1.0f,
+				-1.0f,-1.0f, 1.0f,1.0f,
+				
+				-1.0f,-1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f, 1.0f,1.0f,
+				
+				-1.0f,-1.0f,-1.0f,1.0f,
+				1.0f,-1.0f, 1.0f,1.0f,
+				1.0f,-1.0f,-1.0f,1.0f,
+				
+				-1.0f,-1.0f,-1.0f,1.0f,
+				-1.0f,-1.0f, 1.0f,1.0f,
+				1.0f,-1.0f, 1.0f,1.0f,
+				
+				-1.0f, 1.0f, 1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+				1.0f, 1.0f, 1.0f,1.0f,
+				
+				-1.0f, 1.0f, 1.0f,1.0f,
+				-1.0f, 1.0f,-1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+				
+			}; 
 
-    -0.5f, -0.5f,  0.5f, 
-     0.5f, -0.5f,  0.5f, 
-     0.5f,  0.5f,  0.5f, 
-     0.5f,  0.5f,  0.5f, 
-    -0.5f,  0.5f,  0.5f, 
-    -0.5f, -0.5f,  0.5f, 
+float colors[]={
+				1.0f,0.0f,0.0f,1.0f,
+				1.0f,0.0f,0.0f,1.0f,
+				1.0f,0.0f,0.0f,1.0f,
+				
+				1.0f,0.0f,0.0f,1.0f,
+				1.0f,0.0f,0.0f,1.0f,
+				1.0f,0.0f,0.0f,1.0f,
+				
+				0.0f,1.0f,0.0f,1.0f,
+				0.0f,1.0f,0.0f,1.0f,
+				0.0f,1.0f,0.0f,1.0f,
+				
+				0.0f,1.0f,0.0f,1.0f,
+				0.0f,1.0f,0.0f,1.0f,
+				0.0f,1.0f,0.0f,1.0f,
+				
+				0.0f,0.0f,1.0f,1.0f,
+				0.0f,0.0f,1.0f,1.0f,
+				0.0f,0.0f,1.0f,1.0f,
+				
+				0.0f,0.0f,1.0f,1.0f,
+				0.0f,0.0f,1.0f,1.0f,
+				0.0f,0.0f,1.0f,1.0f,
+				
+				1.0f,1.0f,0.0f,1.0f,
+				1.0f,1.0f,0.0f,1.0f,
+				1.0f,1.0f,0.0f,1.0f,
+				
+				1.0f,1.0f,0.0f,1.0f,
+				1.0f,1.0f,0.0f,1.0f,
+				1.0f,1.0f,0.0f,1.0f,
+				
+				0.0f,1.0f,1.0f,1.0f,
+				0.0f,1.0f,1.0f,1.0f,
+				0.0f,1.0f,1.0f,1.0f,
+				
+				0.0f,1.0f,1.0f,1.0f,
+				0.0f,1.0f,1.0f,1.0f,
+				0.0f,1.0f,1.0f,1.0f,
+				
+				1.0f,1.0f,1.0f,1.0f,
+				1.0f,1.0f,1.0f,1.0f,
+				1.0f,1.0f,1.0f,1.0f,
+				
+				1.0f,1.0f,1.0f,1.0f,
+				1.0f,1.0f,1.0f,1.0f,
+				1.0f,1.0f,1.0f,1.0f,
+			};
 
-    -0.5f,  0.5f,  0.5f,  
-    -0.5f,  0.5f, -0.5f,  
-    -0.5f, -0.5f, -0.5f,  
-    -0.5f, -0.5f, -0.5f,  
-    -0.5f, -0.5f,  0.5f,  
-    -0.5f,  0.5f,  0.5f,  
+float normals[]={
+				0.0f, 0.0f,-1.0f,0.0f,
+				0.0f, 0.0f,-1.0f,0.0f,
+				0.0f, 0.0f,-1.0f,0.0f,
+				
+				0.0f, 0.0f,-1.0f,0.0f,
+				0.0f, 0.0f,-1.0f,0.0f,
+				0.0f, 0.0f,-1.0f,0.0f,
+				
+				0.0f, 0.0f, 1.0f,0.0f,
+				0.0f, 0.0f, 1.0f,0.0f,
+				0.0f, 0.0f, 1.0f,0.0f,
+				
+				0.0f, 0.0f, 1.0f,0.0f,
+				0.0f, 0.0f, 1.0f,0.0f,
+				0.0f, 0.0f, 1.0f,0.0f,
+				
+				1.0f, 0.0f, 0.0f,0.0f,
+				1.0f, 0.0f, 0.0f,0.0f,
+				1.0f, 0.0f, 0.0f,0.0f,
+				
+				1.0f, 0.0f, 0.0f,0.0f,
+				1.0f, 0.0f, 0.0f,0.0f,
+				1.0f, 0.0f, 0.0f,0.0f,
+				
+				-1.0f, 0.0f, 0.0f,0.0f,
+				-1.0f, 0.0f, 0.0f,0.0f,
+				-1.0f, 0.0f, 0.0f,0.0f,
+				
+				-1.0f, 0.0f, 0.0f,0.0f,
+				-1.0f, 0.0f, 0.0f,0.0f,
+				-1.0f, 0.0f, 0.0f,0.0f,
+				
+				0.0f,-1.0f, 0.0f,0.0f,
+				0.0f,-1.0f, 0.0f,0.0f,
+				0.0f,-1.0f, 0.0f,0.0f,
+				
+				0.0f,-1.0f, 0.0f,0.0f,
+				0.0f,-1.0f, 0.0f,0.0f,
+				0.0f,-1.0f, 0.0f,0.0f,
+				
+				0.0f, 1.0f, 0.0f,0.0f,
+				0.0f, 1.0f, 0.0f,0.0f,
+				0.0f, 1.0f, 0.0f,0.0f,
+				
+				0.0f, 1.0f, 0.0f,0.0f,
+				0.0f, 1.0f, 0.0f,0.0f,
+				0.0f, 1.0f, 0.0f,0.0f,
+			};
+			
+			float vertexNormals[]={
+				1.0f,-1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f,-1.0f,1.0f,
+				-1.0f,-1.0f,-1.0f,1.0f,
+				
+				1.0f,-1.0f,-1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f,-1.0f,1.0f,
+				
+				
+				-1.0f,-1.0f, 1.0f,1.0f,	
+				1.0f, 1.0f, 1.0f,1.0f,
+				1.0f,-1.0f, 1.0f,1.0f,
+				
+				-1.0f,-1.0f, 1.0f,1.0f,
+				-1.0f, 1.0f, 1.0f,1.0f,
+				1.0f, 1.0f, 1.0f,1.0f,
+				
+				1.0f,-1.0f, 1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+				1.0f,-1.0f,-1.0f,1.0f,
+				
+				1.0f,-1.0f, 1.0f,1.0f,
+				1.0f, 1.0f, 1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+				
+				-1.0f,-1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f, 1.0f,1.0f,
+				-1.0f,-1.0f, 1.0f,1.0f,
+				
+				-1.0f,-1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f,-1.0f,1.0f,
+				-1.0f, 1.0f, 1.0f,1.0f,
+				
+				-1.0f,-1.0f,-1.0f,1.0f,
+				1.0f,-1.0f, 1.0f,1.0f,
+				1.0f,-1.0f,-1.0f,1.0f,
+				
+				-1.0f,-1.0f,-1.0f,1.0f,
+				-1.0f,-1.0f, 1.0f,1.0f,
+				1.0f,-1.0f, 1.0f,1.0f,
+				
+				-1.0f, 1.0f, 1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+				1.0f, 1.0f, 1.0f,1.0f,
+				
+				-1.0f, 1.0f, 1.0f,1.0f,
+				-1.0f, 1.0f,-1.0f,1.0f,
+				1.0f, 1.0f,-1.0f,1.0f,
+			};
 
-     0.5f,  0.5f,  0.5f,  
-     0.5f,  0.5f, -0.5f,  
-     0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f,  0.5f,  
-     0.5f,  0.5f,  0.5f,  
+			float texCoords[]={
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+			};
 
-    -0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f,  0.5f,  
-     0.5f, -0.5f,  0.5f,  
-    -0.5f, -0.5f,  0.5f,  
-    -0.5f, -0.5f, -0.5f,  
-
-    -0.5f,  0.5f, -0.5f,  
-     0.5f,  0.5f, -0.5f,  
-     0.5f,  0.5f,  0.5f,  
-     0.5f,  0.5f,  0.5f,  
-    -0.5f,  0.5f,  0.5f,  
-    -0.5f,  0.5f, -0.5f
-};
-
-GLfloat colors[] = {
-    -0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f, -0.5f, 
-     0.5f,  0.5f, -0.5f, 
-     0.5f,  0.5f, -0.5f, 
-    -0.5f,  0.5f, -0.5f, 
-    -0.5f, -0.5f, -0.5f, 
-
-    -0.5f, -0.5f,  0.5f, 
-     0.5f, -0.5f,  0.5f, 
-     0.5f,  0.5f,  0.5f, 
-     0.5f,  0.5f,  0.5f, 
-    -0.5f,  0.5f,  0.5f, 
-    -0.5f, -0.5f,  0.5f, 
-
-    -0.5f,  0.5f,  0.5f,  
-    -0.5f,  0.5f, -0.5f,  
-    -0.5f, -0.5f, -0.5f,  
-    -0.5f, -0.5f, -0.5f,  
-    -0.5f, -0.5f,  0.5f,  
-    -0.5f,  0.5f,  0.5f,  
-
-     0.5f,  0.5f,  0.5f,  
-     0.5f,  0.5f, -0.5f,  
-     0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f,  0.5f,  
-     0.5f,  0.5f,  0.5f,  
-
-    -0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f, -0.5f,  
-     0.5f, -0.5f,  0.5f,  
-     0.5f, -0.5f,  0.5f,  
-    -0.5f, -0.5f,  0.5f,  
-    -0.5f, -0.5f, -0.5f,  
-
-    -0.5f,  0.5f, -0.5f,  
-     0.5f,  0.5f, -0.5f,  
-     0.5f,  0.5f,  0.5f,  
-     0.5f,  0.5f,  0.5f,  
-    -0.5f,  0.5f,  0.5f,  
-    -0.5f,  0.5f, -0.5f
-};
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {    
@@ -143,7 +280,8 @@ void freeOpenGLProgram() {
 	
 	glDeleteVertexArrays(1,&vao); //Usunięcie vao
 	glDeleteBuffers(1,&bufVertices); //Usunięcie VBO z wierzchołkami
-	glDeleteBuffers(1,&bufColors); //Usunięcie VBO z kolorami				
+	glDeleteBuffers(1,&bufColors); //Usunięcie VBO z kolorami
+    glDeleteBuffers(1,&bufNormals);				
 }
 
 void drawObject(GLuint vao, ShaderProgram *shaderProgram, glm::mat4 mP, glm::mat4 mV, glm::mat4 mM) {	
@@ -151,7 +289,8 @@ void drawObject(GLuint vao, ShaderProgram *shaderProgram, glm::mat4 mP, glm::mat
 		
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(mP));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(mV));
-	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));			
+	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));	
+    glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,0,-5,1);		
 	
 	glBindVertexArray(vao);
 	
@@ -171,6 +310,7 @@ void drawScene(GLFWwindow* window, float position) {
 		glm::vec3(0.0f, 1.0f, 0.0f));
 		
 	glm::mat4 M = glm::mat4(1.0f);  
+    //M = glm::scale(M, glm::vec3(1.0f,10.0f,1.0f));
     M = glm::translate(M, glm::vec3(position,0.0f,0.0f));
 		
 	drawObject(vao,shaderProgram,P,V,M);
@@ -210,14 +350,16 @@ int main(){
 
     shaderProgram=new ShaderProgram("vshader.txt",NULL,"fshader.txt");
 
-    bufVertices=makeBuffer(vertices, vertexCount, sizeof(float)*3);
-	bufColors=makeBuffer(colors, vertexCount, sizeof(float)*3);
+    bufVertices=makeBuffer(vertices, vertexCount, sizeof(float)*4);
+	bufColors=makeBuffer(colors, vertexCount, sizeof(float)*4);
+    bufNormals=makeBuffer(normals, vertexCount, sizeof(float)*4);
 
     glGenVertexArrays(1,&vao); 
 	glBindVertexArray(vao);
 
-    assignVBOtoAttribute(shaderProgram,"position",bufVertices,3); 
-	assignVBOtoAttribute(shaderProgram,"color",bufColors,3);
+    assignVBOtoAttribute(shaderProgram,"position",bufVertices,4); 
+	assignVBOtoAttribute(shaderProgram,"color",bufColors,4);
+    assignVBOtoAttribute(shaderProgram,"normal",bufNormals,4);
    
     glBindVertexArray(0);    
 

@@ -1,8 +1,29 @@
 #version 330 core
-in vec3 ourColor;
+
+in vec4 ourColor;
+in vec4 vN; 
+in vec4 vV; 
+in vec4 vL; 
+
 out vec4 color;
   
 void main()
 {
-    color = vec4(ourColor,1.0);
+    vec4 mN=normalize(vN); //normalizuj interpolowany wektor normalny w przestrzeni oka
+	vec4 mL=normalize(vL); //normalizuj interpolowany wektor do obserwatora w przestrzeni oka
+	vec4 mV=normalize(vV); //normalizuj interpolowany wektor do zrodla swiatla w przestrzeni oka
+	vec4 mR=reflect(-mL,mN); //oblicz wektor odbity w przestrzeni oka
+
+    vec4 Md = ourColor;
+    vec4 Ms = ourColor;
+    vec4 Ma=vec4(0,0,0,1); //Kolor materialu dla swiatla otoczenia
+	vec4 La=vec4(0,0,0,1); //Kolor swiatla otoczenia	
+	vec4 Ld=vec4(1,1,1,1); //Kolor swiatla rozpraszanego	
+	vec4 Ls=vec4(1,1,1,1); //Kolor swiatla odbijanego
+	float shininess=50; 
+
+	float nl=max(0,dot(mN,mL)); 
+	float rv=pow(max(0,dot(mN,mL)),shininess); 
+
+	color=Ma*La+Md*Ld*nl+Ms*Ls*rv;     
 }

@@ -1,15 +1,25 @@
 #version 330 core
-layout (location = 0) in vec3 position; 
-layout (location = 1) in vec3 color;	
+in vec4 position; 
+in vec4 color;	
+in vec4 normal;
 
 uniform mat4 P;
 uniform mat4 V;
 uniform mat4 M;
-  
-out vec3 ourColor; 
+uniform vec4 lightPos0;
+
+out vec4 vN; 
+out vec4 vV; 
+out vec4 vL; 
+out vec4 ourColor; 
 
 void main()
 {
-    gl_Position=P*V*M*vec4(position,1.0);
+    gl_Position=P*V*M*position;
+
+    vN=normalize(V*M*normal); 
+	vL=normalize(V*lightPos0-V*M*position); 
+	vV=normalize(vec4(0,0,0,1)-V*M*position);
+
     ourColor = color; 
 }       
