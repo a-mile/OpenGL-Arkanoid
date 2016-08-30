@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <math.h>
 
 #include "shaderprogram.h"
 
@@ -20,7 +21,8 @@ GLuint vao;
 
 int vertexCount = 36;
 float padSpeed = 0;
-float padPosition = 0;
+float ballSpeedX = 40;
+float ballSpeedY = 40;
 
 float vertices[]={
 				1.0f,-1.0f,-1.0f,1.0f,
@@ -251,6 +253,7 @@ glm::mat4 leftWallModel = glm::mat4(1.0f);
 glm::mat4 rightWallModel = glm::mat4(1.0f);
 glm::mat4 upperWallModel = glm::mat4(1.0f);
 glm::mat4 padModel = glm::mat4(1.0f);
+glm::mat4 ballModel = glm::mat4(1.0f);
 glm::mat4 P = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.2f, 200.0f); 		
 glm::mat4 V = glm::lookAt(
 		glm::vec3(0.0f, -30.0f, -100.0f),
@@ -259,6 +262,10 @@ glm::mat4 V = glm::lookAt(
 float leftWallX;
 float rightWallX;	
 float upperWallY;
+float padY;
+float bounceAngle = 3.1415;
+float directionX = 1;
+float directionY = 1;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {    
@@ -305,7 +312,7 @@ void initOpenGLProgram(GLFWwindow* window)
 
 	shaderProgram=new ShaderProgram("vshader.txt",NULL,"fshader.txt");
 
-    bufVertices=makeBuffer(vertices, vertexCount, sizeof(float)*4);
+    bufVertices=makeBuffer(vertices, vertexCount, sizeof(float)*4);	
 	bufColors=makeBuffer(colors, vertexCount, sizeof(float)*4);
     bufNormals=makeBuffer(normals, vertexCount, sizeof(float)*4);
 
@@ -323,6 +330,8 @@ void initOpenGLProgram(GLFWwindow* window)
     leftWallModel = glm::scale(leftWallModel, glm::vec3(1.0f,50.0f,1.0f)); 	
 	rightWallModel = glm::translate(rightWallModel, glm::vec3(-49.0f,20.0f,0.0f));
     rightWallModel = glm::scale(rightWallModel, glm::vec3(1.0f,50.0f,1.0f)); 	
+	padModel = glm::scale(padModel, glm::vec3(6.0f,1.0f,1.0f));
+	padModel = glm::translate(padModel, glm::vec3(0.0f,-29.0f,0.0f));	
 
 	leftWallX = (leftWallModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
 	for(int i=4; i<vertexCount*4 - 3; i+=4)
@@ -355,7 +364,18 @@ void initOpenGLProgram(GLFWwindow* window)
 		{
 			upperWallY = position.y;
 		}
-	}	 
+	}	
+
+	padY = (padModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
+	for(int i=4; i<vertexCount*4 - 3; i+=4)
+	{
+		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
+		glm::vec4 position = padModel*vertex;
+		if(position.y > padY)
+		{
+			padY = position.y;
+		}
+	}	
 }
 
 void freeOpenGLProgram() {
@@ -383,33 +403,79 @@ void drawObject(GLuint vao, ShaderProgram *shaderProgram, glm::mat4 mP, glm::mat
 	glBindVertexArray(0);
 }
 
-void drawScene(GLFWwindow* window, float padPositionDelta) {	
+void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ballDeltaY) {	
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-	
-	float padPositionTemp = padPosition + padPositionDelta;	
-	glm::mat4 padModelTemp = glm::mat4(1.0f);
-	padModelTemp = glm::scale(padModelTemp, glm::vec3(6.0f,1.0f,1.0f));
-	padModelTemp = glm::translate(padModelTemp, glm::vec3(padPositionTemp,-29.0f,0.0f));		
+			
+	padModel = glm::translate(padModel, glm::vec3(padDeltaX,0.0f,0.0f));
+	ballModel = glm::translate(ballModel, glm::vec3(ballDeltaX,ballDeltaY,0.0f));
+		
+	float padLeftEdgeX = (padModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
+	float padRightEdgeX = (padModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
 
-	float padLeftEdgeX = (padModelTemp*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-	float padRightEdgeX = (padModelTemp*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
 	for(int i=4; i<vertexCount*4 - 3; i+=4)
 	{
 		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
-		glm::vec4 position = padModelTemp*vertex;
+		glm::vec4 position = padModel*vertex;
 		if(position.x > padLeftEdgeX)
 			padLeftEdgeX = position.x;
 		if(position.x < padRightEdgeX)
 			padRightEdgeX = position.x;
+	}	
+
+	if(padLeftEdgeX > leftWallX || padRightEdgeX < rightWallX)
+	{		
+		padModel = glm::translate(padModel, glm::vec3(-padDeltaX,0.0f,0.0f));		
 	}
 
-	if(padLeftEdgeX <= leftWallX && padRightEdgeX >= rightWallX)
+	float ballLeftEdgeX = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
+	float ballRightEdgeX = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
+	float ballUpperEdgeY = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
+	float ballBottomEdgeY = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
+
+	for(int i=4; i<vertexCount*4 - 3; i+=4)
 	{
-		padModel = padModelTemp;
-		padPosition = padPositionTemp;
+		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
+		glm::vec4 position = ballModel*vertex;
+		if(position.x > ballLeftEdgeX)
+			ballLeftEdgeX = position.x;
+		if(position.x < ballRightEdgeX)
+			ballRightEdgeX = position.x;
+		if(position.y > ballUpperEdgeY)
+			ballUpperEdgeY = position.y;
+		if(position.y < ballBottomEdgeY)
+			ballBottomEdgeY = position.y;
 	}
 
-		
+	if(ballLeftEdgeX > leftWallX || ballRightEdgeX < rightWallX)
+	{
+		ballModel = glm::translate(ballModel, glm::vec3(-ballDeltaX,0.0f,0.0f));	
+		directionX = -directionX;	
+	}
+	if(ballUpperEdgeY > upperWallY)
+	{
+		ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
+		directionY = -directionY;
+	}
+	if(ballBottomEdgeY < padY)
+	{
+		if(ballRightEdgeX <= padLeftEdgeX && ballLeftEdgeX >= padRightEdgeX)
+		{
+			float ballMiddle = (ballLeftEdgeX + ballRightEdgeX)/2;
+			float factor = ((ballMiddle - padRightEdgeX) / (padLeftEdgeX - padRightEdgeX))*2 - 1;
+			factor = roundf(factor * 100) / 100;			
+			
+			bounceAngle = factor * 5 * 3.1415 / 12;
+
+			directionX = 1;
+			directionY = 1;
+			
+			ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));			
+		}
+	}
+
+	
+
+	drawObject(vao,shaderProgram,P,V,ballModel, glm::vec4(1.0f,0.0f,1.0f,1.0f));	
 	drawObject(vao,shaderProgram,P,V,padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f));
     drawObject(vao,shaderProgram,P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	 
     drawObject(vao,shaderProgram,P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	
@@ -445,13 +511,17 @@ int main(){
     glViewport(0, 0, WIDTH, HEIGHT);
 
     initOpenGLProgram(window);  
-	float delta = 0;     	    		
+	float padDeltaX = 0; 
+	float ballDeltaX = 0;     
+	float ballDeltaY = 0; 	    		
 
     while(!glfwWindowShouldClose(window))
     {        	
-		delta = padSpeed * glfwGetTime();	
+		padDeltaX = padSpeed * glfwGetTime();	
+		ballDeltaX = ballSpeedX * glfwGetTime() * std::sin(bounceAngle) * directionX;		
+		ballDeltaY = ballSpeedY * glfwGetTime() * std::cos(bounceAngle) * directionY;
         glfwSetTime(0);
-        drawScene(window,delta);		
+        drawScene(window,padDeltaX,ballDeltaX, ballDeltaY);		
         glfwPollEvents();
     }
 
