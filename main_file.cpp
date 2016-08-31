@@ -20,9 +20,14 @@ GLuint bufNormals;
 GLuint vao;
 
 int vertexCount = 36;
-float padSpeed = 0;
-float ballSpeedX = 40;
-float ballSpeedY = 40;
+
+float padSpeed = 6;
+float ballSpeed = 50;
+
+float padDirectionX = 0;
+float bounceAngle = 3.1415;
+float ballDirectionX = 1;
+float ballDirectionY = 1;
 
 float vertices[]={
 				1.0f,-1.0f,-1.0f,1.0f,
@@ -263,9 +268,7 @@ float leftWallX;
 float rightWallX;	
 float upperWallY;
 float padY;
-float bounceAngle = 3.1415;
-float directionX = 1;
-float directionY = 1;
+
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {    
@@ -274,16 +277,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     	    glfwSetWindowShouldClose(window, GL_TRUE);
         if(key == GLFW_KEY_LEFT)
 		{		
-        	padSpeed = 6;
+        	padDirectionX = 1;
 		}
         if(key == GLFW_KEY_RIGHT)
 		{			
-            padSpeed = -6;
+            padDirectionX = -1;
 		}
     }
     if(action == GLFW_RELEASE)
     {
-        padSpeed = 0;
+        padDirectionX = 0;
     }
 } 
 
@@ -449,12 +452,12 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 	if(ballLeftEdgeX > leftWallX || ballRightEdgeX < rightWallX)
 	{
 		ballModel = glm::translate(ballModel, glm::vec3(-ballDeltaX,0.0f,0.0f));	
-		directionX = -directionX;	
+		ballDirectionX = -ballDirectionX;	
 	}
 	if(ballUpperEdgeY > upperWallY)
 	{
 		ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
-		directionY = -directionY;
+		ballDirectionY = -ballDirectionY;
 	}
 	if(ballBottomEdgeY < padY)
 	{
@@ -466,14 +469,12 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 			
 			bounceAngle = factor * 5 * 3.1415 / 12;
 
-			directionX = 1;
-			directionY = 1;
+			ballDirectionX = 1;
+			ballDirectionY = 1;
 			
 			ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));			
 		}
-	}
-
-	
+	}	
 
 	drawObject(vao,shaderProgram,P,V,ballModel, glm::vec4(1.0f,0.0f,1.0f,1.0f));	
 	drawObject(vao,shaderProgram,P,V,padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f));
@@ -491,6 +492,7 @@ int main(){
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 
     GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "OpenGL-Arkanoid", nullptr, nullptr);
     if (window == nullptr)
@@ -507,21 +509,25 @@ int main(){
         std::cout << "Failed to initialize GLEW" << std::endl;
         return -1;
     }
-        
+        	
     glViewport(0, 0, WIDTH, HEIGHT);
 
     initOpenGLProgram(window);  
+
 	float padDeltaX = 0; 
 	float ballDeltaX = 0;     
 	float ballDeltaY = 0; 	    		
 
     while(!glfwWindowShouldClose(window))
     {        	
-		padDeltaX = padSpeed * glfwGetTime();	
-		ballDeltaX = ballSpeedX * glfwGetTime() * std::sin(bounceAngle) * directionX;		
-		ballDeltaY = ballSpeedY * glfwGetTime() * std::cos(bounceAngle) * directionY;
+		padDeltaX = padSpeed * glfwGetTime() * padDirectionX;	
+		ballDeltaX = ballSpeed * glfwGetTime() * std::sin(bounceAngle) * ballDirectionX;		
+		ballDeltaY = ballSpeed * glfwGetTime() * std::cos(bounceAngle) * ballDirectionY;
+
         glfwSetTime(0);
+
         drawScene(window,padDeltaX,ballDeltaX, ballDeltaY);		
+
         glfwPollEvents();
     }
 
