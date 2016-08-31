@@ -21,13 +21,11 @@ GLuint vao;
 
 int vertexCount = 36;
 
-float padSpeed = 6;
-float ballSpeed = 50;
+float padVelocityX = 0;
 
-float padDirectionX = 0;
 float bounceAngle = 3.1415;
-float ballDirectionX = 1;
-float ballDirectionY = 1;
+float ballVelocityX = 0;
+float ballVelocityY = 60;
 
 float vertices[]={
 				1.0f,-1.0f,-1.0f,1.0f,
@@ -277,16 +275,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     	    glfwSetWindowShouldClose(window, GL_TRUE);
         if(key == GLFW_KEY_LEFT)
 		{		
-        	padDirectionX = 1;
+        	padVelocityX = 10;
 		}
         if(key == GLFW_KEY_RIGHT)
 		{			
-            padDirectionX = -1;
+            padVelocityX = -10;
 		}
     }
     if(action == GLFW_RELEASE)
     {
-        padDirectionX = 0;
+        padVelocityX = 0;
     }
 } 
 
@@ -414,22 +412,6 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 		
 	float padLeftEdgeX = (padModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
 	float padRightEdgeX = (padModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-
-	for(int i=4; i<vertexCount*4 - 3; i+=4)
-	{
-		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
-		glm::vec4 position = padModel*vertex;
-		if(position.x > padLeftEdgeX)
-			padLeftEdgeX = position.x;
-		if(position.x < padRightEdgeX)
-			padRightEdgeX = position.x;
-	}	
-
-	if(padLeftEdgeX > leftWallX || padRightEdgeX < rightWallX)
-	{		
-		padModel = glm::translate(padModel, glm::vec3(-padDeltaX,0.0f,0.0f));		
-	}
-
 	float ballLeftEdgeX = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
 	float ballRightEdgeX = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
 	float ballUpperEdgeY = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
@@ -438,41 +420,49 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 	for(int i=4; i<vertexCount*4 - 3; i+=4)
 	{
 		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
-		glm::vec4 position = ballModel*vertex;
-		if(position.x > ballLeftEdgeX)
-			ballLeftEdgeX = position.x;
-		if(position.x < ballRightEdgeX)
-			ballRightEdgeX = position.x;
-		if(position.y > ballUpperEdgeY)
-			ballUpperEdgeY = position.y;
-		if(position.y < ballBottomEdgeY)
-			ballBottomEdgeY = position.y;
-	}
+		glm::vec4 padPosition = padModel*vertex;
+		glm::vec4 ballPosition = ballModel*vertex;
+		if(padPosition.x > padLeftEdgeX)
+			padLeftEdgeX = padPosition.x;
+		if(padPosition.x < padRightEdgeX)
+			padRightEdgeX = padPosition.x;				
+		if(ballPosition.x > ballLeftEdgeX)
+			ballLeftEdgeX = ballPosition.x;
+		if(ballPosition.x < ballRightEdgeX)
+			ballRightEdgeX = ballPosition.x;
+		if(ballPosition.y > ballUpperEdgeY)
+			ballUpperEdgeY = ballPosition.y;
+		if(ballPosition.y < ballBottomEdgeY)
+			ballBottomEdgeY = ballPosition.y;
+	}	
+
+	if(padLeftEdgeX > leftWallX || padRightEdgeX < rightWallX)
+	{		
+		padModel = glm::translate(padModel, glm::vec3(-padDeltaX,0.0f,0.0f));		
+	}		
 
 	if(ballLeftEdgeX > leftWallX || ballRightEdgeX < rightWallX)
 	{
 		ballModel = glm::translate(ballModel, glm::vec3(-ballDeltaX,0.0f,0.0f));	
-		ballDirectionX = -ballDirectionX;	
+		ballVelocityX = -ballVelocityX;	
 	}
 	if(ballUpperEdgeY > upperWallY)
 	{
 		ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
-		ballDirectionY = -ballDirectionY;
+		ballVelocityY = -ballVelocityY;
 	}
 	if(ballBottomEdgeY < padY)
 	{
-		if(ballRightEdgeX <= padLeftEdgeX && ballLeftEdgeX >= padRightEdgeX)
+		if(ballRightEdgeX < padLeftEdgeX && ballLeftEdgeX > padRightEdgeX)
 		{
 			float ballMiddle = (ballLeftEdgeX + ballRightEdgeX)/2;
 			float factor = ((ballMiddle - padRightEdgeX) / (padLeftEdgeX - padRightEdgeX))*2 - 1;
 			factor = roundf(factor * 100) / 100;			
-			
-			bounceAngle = factor * 5 * 3.1415 / 12;
+									
+			ballVelocityY = -ballVelocityY;		
+			ballVelocityX = ballVelocityY * factor;	
 
-			ballDirectionX = 1;
-			ballDirectionY = 1;
-			
-			ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));			
+			ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
 		}
 	}	
 
@@ -520,9 +510,9 @@ int main(){
 
     while(!glfwWindowShouldClose(window))
     {        	
-		padDeltaX = padSpeed * glfwGetTime() * padDirectionX;	
-		ballDeltaX = ballSpeed * glfwGetTime() * std::sin(bounceAngle) * ballDirectionX;		
-		ballDeltaY = ballSpeed * glfwGetTime() * std::cos(bounceAngle) * ballDirectionY;
+		padDeltaX = glfwGetTime() * padVelocityX;	
+		ballDeltaX = glfwGetTime() * ballVelocityX;		
+		ballDeltaY = glfwGetTime() * ballVelocityY;
 
         glfwSetTime(0);
 
