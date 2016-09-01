@@ -144,20 +144,21 @@ float leftWallX;
 float rightWallX;	
 float upperWallY;
 float padY;
-Block level1[9*18];
+Block* level1[9*9];
 
 void generateLevel1()
 {
-	for(int j=0; j<18; j++)
+
+	for(int j=0; j<9; j++)
 	{
 		for(int i=0; i<9; i++)
 		{
 			glm::mat4 blockModel = glm::mat4(1.0f);
 			blockModel = glm::scale(blockModel, glm::vec3(5.1f,1.0f,1.0f));
-			blockModel = glm::translate(blockModel, glm::vec3(8.4,68-3*j,0));
-		
-			blockModel = glm::translate(blockModel, glm::vec3(-i*2.1,0,0));
-			Block levelBlock(3, blockModel);
+			blockModel = glm::translate(blockModel, glm::vec3(8.4f,(float)(68.0f-3.0f*j),0.0f));
+			blockModel = glm::translate(blockModel, glm::vec3((float)(-i*2.1f),0.0f,0.0f));			
+			Block* levelBlock = new Block(2, blockModel);
+			levelBlock->calculateEdges();
 			level1[9*j + i] = levelBlock;
 		}
 	}
@@ -221,7 +222,8 @@ void initOpenGLProgram(GLFWwindow* window)
 	rightWallModel = glm::translate(rightWallModel, glm::vec3(-49.0f,20.0f,0.0f));
     rightWallModel = glm::scale(rightWallModel, glm::vec3(1.0f,50.0f,1.0f)); 	
 	padModel = glm::scale(padModel, glm::vec3(6.0f,1.0f,1.0f));
-	padModel = glm::translate(padModel, glm::vec3(0.0f,-29.0f,0.0f));	
+	padModel = glm::translate(padModel, glm::vec3(0.0f,-29.0f,0.0f));
+	ballModel = glm::translate(ballModel, glm::vec3(0.0f,-27.0f,0.0f));	
 
 	generateLevel1();
 
@@ -254,7 +256,7 @@ void initOpenGLProgram(GLFWwindow* window)
 		{
 			padY = padPosition.y;
 		}
-	}								
+	}						
 }
 
 void freeOpenGLProgram() {
@@ -314,7 +316,7 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 			ballUpperEdgeY = ballPosition.y;
 		if(ballPosition.y < ballBottomEdgeY)
 			ballBottomEdgeY = ballPosition.y;
-	}	
+	}		
 
 	if(padLeftEdgeX > leftWallX || padRightEdgeX < rightWallX)
 	{		
@@ -346,16 +348,37 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 		}
 	}	
 
+	for(int i=0; i<9*9; i++)
+	{
+		if(level1[i]->canDraw())
+		{
+			if(ballRightEdgeX < level1[i]->getLeftEdgeX() && ballLeftEdgeX > level1[i]->getRightEdgeX())
+			{
+				if(ballUpperEdgeY > level1[i]->getBottomEdgeY() && ballUpperEdgeY < level1[i]->getUpperEdgeY())
+				{
+					//std::cout << i << std::endl;
+					ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
+					ballVelocityY = -ballVelocityY;
+					
+					level1[i]->hit();
+					break;
+				}
+			}
+		}
+	}	
+
 	drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount, P,V,ballModel, glm::vec4(1.0f,0.0f,1.0f,1.0f));		
 	drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f));
     drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	 
     drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	
     drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));
-	for(int i=0; i<9*18; i++)
+
+	for(int i=0; i<9*9; i++)
 	{
-		if(level1[i].canDraw())
-		{
-			drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,level1[i].getModel(), level1[i].getColor());
+		if(level1[i]->canDraw())
+		{			
+			drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,level1[i]->getModel(), level1[i]->getColor());
+			
 		}
 	}
 		
