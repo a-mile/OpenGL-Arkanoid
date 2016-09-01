@@ -9,25 +9,25 @@
 #include <math.h>
 
 #include "shaderprogram.h"
+#include "block.h"
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 
 ShaderProgram *shaderProgram;
 
-GLuint bufVertices; 
-GLuint bufColors;
-GLuint bufNormals;
+GLuint bufCubeVertices; 
+GLuint bufCubeNormals;
+GLuint bufSphereVertices; 
+GLuint bufSphereNormals;
 GLuint vao;
 
-int vertexCount = 36;
+int cubeVertexCount = 36;
 
 float padVelocityX = 0;
-
-float bounceAngle = 3.1415;
 float ballVelocityX = 0;
 float ballVelocityY = 60;
 
-float vertices[]={
+float cubeVertices[]={
 				1.0f,-1.0f,-1.0f,1.0f,
 				-1.0f, 1.0f,-1.0f,1.0f,
 				-1.0f,-1.0f,-1.0f,1.0f,
@@ -77,59 +77,9 @@ float vertices[]={
 				-1.0f, 1.0f,-1.0f,1.0f,
 				1.0f, 1.0f,-1.0f,1.0f,
 				
-			}; 
+			}; 				
 
-float colors[]={
-				1.0f,0.0f,0.0f,1.0f,
-				1.0f,0.0f,0.0f,1.0f,
-				1.0f,0.0f,0.0f,1.0f,
-				
-				1.0f,0.0f,0.0f,1.0f,
-				1.0f,0.0f,0.0f,1.0f,
-				1.0f,0.0f,0.0f,1.0f,
-				
-				0.0f,1.0f,0.0f,1.0f,
-				0.0f,1.0f,0.0f,1.0f,
-				0.0f,1.0f,0.0f,1.0f,
-				
-				0.0f,1.0f,0.0f,1.0f,
-				0.0f,1.0f,0.0f,1.0f,
-				0.0f,1.0f,0.0f,1.0f,
-				
-				0.0f,0.0f,1.0f,1.0f,
-				0.0f,0.0f,1.0f,1.0f,
-				0.0f,0.0f,1.0f,1.0f,
-				
-				0.0f,0.0f,1.0f,1.0f,
-				0.0f,0.0f,1.0f,1.0f,
-				0.0f,0.0f,1.0f,1.0f,
-				
-				1.0f,1.0f,0.0f,1.0f,
-				1.0f,1.0f,0.0f,1.0f,
-				1.0f,1.0f,0.0f,1.0f,
-				
-				1.0f,1.0f,0.0f,1.0f,
-				1.0f,1.0f,0.0f,1.0f,
-				1.0f,1.0f,0.0f,1.0f,
-				
-				0.0f,1.0f,1.0f,1.0f,
-				0.0f,1.0f,1.0f,1.0f,
-				0.0f,1.0f,1.0f,1.0f,
-				
-				0.0f,1.0f,1.0f,1.0f,
-				0.0f,1.0f,1.0f,1.0f,
-				0.0f,1.0f,1.0f,1.0f,
-				
-				1.0f,1.0f,1.0f,1.0f,
-				1.0f,1.0f,1.0f,1.0f,
-				1.0f,1.0f,1.0f,1.0f,
-				
-				1.0f,1.0f,1.0f,1.0f,
-				1.0f,1.0f,1.0f,1.0f,
-				1.0f,1.0f,1.0f,1.0f,
-			};
-
-float normals[]={
+float cubeNormals[]={
 
 				0.0f, 0.0f,-1.0f,0.0f,
 				0.0f, 0.0f,-1.0f,0.0f,
@@ -178,79 +128,7 @@ float normals[]={
 				0.0f, 1.0f, 0.0f,0.0f,
 				0.0f, 1.0f, 0.0f,0.0f,
 				0.0f, 1.0f, 0.0f,0.0f,
-			};
-			
-			float vertexNormals[]={
-				1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				-1.0f,-1.0f,-1.0f,1.0f,
-				
-				1.0f,-1.0f,-1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				
-				
-				-1.0f,-1.0f, 1.0f,1.0f,	
-				1.0f, 1.0f, 1.0f,1.0f,
-				1.0f,-1.0f, 1.0f,1.0f,
-				
-				-1.0f,-1.0f, 1.0f,1.0f,
-				-1.0f, 1.0f, 1.0f,1.0f,
-				1.0f, 1.0f, 1.0f,1.0f,
-				
-				1.0f,-1.0f, 1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				1.0f,-1.0f,-1.0f,1.0f,
-				
-				1.0f,-1.0f, 1.0f,1.0f,
-				1.0f, 1.0f, 1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f, 1.0f,1.0f,
-				-1.0f,-1.0f, 1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f, 1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				1.0f,-1.0f, 1.0f,1.0f,
-				1.0f,-1.0f,-1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f,-1.0f, 1.0f,1.0f,
-				1.0f,-1.0f, 1.0f,1.0f,
-				
-				-1.0f, 1.0f, 1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				1.0f, 1.0f, 1.0f,1.0f,
-				
-				-1.0f, 1.0f, 1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-			};
-
-float texCoords[]={
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-			};
-
+			};						
 
 glm::mat4 leftWallModel = glm::mat4(1.0f);
 glm::mat4 rightWallModel = glm::mat4(1.0f);
@@ -266,6 +144,24 @@ float leftWallX;
 float rightWallX;	
 float upperWallY;
 float padY;
+Block level1[9*18];
+
+void generateLevel1()
+{
+	for(int j=0; j<18; j++)
+	{
+		for(int i=0; i<9; i++)
+		{
+			glm::mat4 blockModel = glm::mat4(1.0f);
+			blockModel = glm::scale(blockModel, glm::vec3(5.1f,1.0f,1.0f));
+			blockModel = glm::translate(blockModel, glm::vec3(8.4,68-3*j,0));
+		
+			blockModel = glm::translate(blockModel, glm::vec3(-i*2.1,0,0));
+			Block levelBlock(3, blockModel);
+			level1[9*j + i] = levelBlock;
+		}
+	}
+}
 
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -312,18 +208,11 @@ void initOpenGLProgram(GLFWwindow* window)
 	glfwSetKeyCallback(window, key_callback);
 
 	shaderProgram=new ShaderProgram("vshader.txt",NULL,"fshader.txt");
+	glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,0,-40,1);
+	glGenVertexArrays(1,&vao); 
 
-    bufVertices=makeBuffer(vertices, vertexCount, sizeof(float)*4);	
-	bufColors=makeBuffer(colors, vertexCount, sizeof(float)*4);
-    bufNormals=makeBuffer(normals, vertexCount, sizeof(float)*4);
-
-    glGenVertexArrays(1,&vao); 
-	glBindVertexArray(vao);
-
-    assignVBOtoAttribute(shaderProgram,"position",bufVertices,4); 	
-    assignVBOtoAttribute(shaderProgram,"normal",bufNormals,4);
-   
-    glBindVertexArray(0); 
+    bufCubeVertices=makeBuffer(cubeVertices, cubeVertexCount, sizeof(float)*4);		
+    bufCubeNormals=makeBuffer(cubeNormals, cubeVertexCount, sizeof(float)*4);  	
 
 	upperWallModel = glm::translate(upperWallModel, glm::vec3(0.0f,70.0f,0.0f));
 	upperWallModel = glm::scale(upperWallModel, glm::vec3(50.0f,1.0f,1.0f));	
@@ -334,70 +223,61 @@ void initOpenGLProgram(GLFWwindow* window)
 	padModel = glm::scale(padModel, glm::vec3(6.0f,1.0f,1.0f));
 	padModel = glm::translate(padModel, glm::vec3(0.0f,-29.0f,0.0f));	
 
-	leftWallX = (leftWallModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-	for(int i=4; i<vertexCount*4 - 3; i+=4)
-	{
-		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
-		glm::vec4 position = leftWallModel*vertex;
-		if(position.x < leftWallX)
-		{
-			leftWallX = position.x;
-		}
-	}		
+	generateLevel1();
 
-	rightWallX = (rightWallModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-	for(int i=4; i<vertexCount*4 - 3; i+=4)
-	{
-		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
-		glm::vec4 position = rightWallModel*vertex;
-		if(position.x > rightWallX)
-		{
-			rightWallX = position.x;
-		}
-	}	 
+	leftWallX = (leftWallModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
+	rightWallX = (rightWallModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
+	upperWallY = (upperWallModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).y;
+	padY = (padModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).y;
 
-	upperWallY = (upperWallModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
-	for(int i=4; i<vertexCount*4 - 3; i+=4)
+	for(int i=4; i<cubeVertexCount*4 - 3; i+=4)
 	{
-		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
-		glm::vec4 position = upperWallModel*vertex;
-		if(position.y < upperWallY)
-		{
-			upperWallY = position.y;
-		}
-	}	
+		glm::vec4 vertex = glm::vec4(cubeVertices[i], cubeVertices[i+1], cubeVertices[i+2], cubeVertices[i+3]);
+		glm::vec4 leftWallPosition = leftWallModel*vertex;
+		glm::vec4 rightWallPosition = rightWallModel*vertex;
+		glm::vec4 upperWallPosition = upperWallModel*vertex;
+		glm::vec4 padPosition = padModel*vertex;
 
-	padY = (padModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
-	for(int i=4; i<vertexCount*4 - 3; i+=4)
-	{
-		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
-		glm::vec4 position = padModel*vertex;
-		if(position.y > padY)
+		if(leftWallPosition.x < leftWallX)
 		{
-			padY = position.y;
+			leftWallX = leftWallPosition.x;
+		}		
+		if(rightWallPosition.x > rightWallX)
+		{
+			rightWallX = rightWallPosition.x;
+		}		
+		if(upperWallPosition.y < upperWallY)
+		{
+			upperWallY = upperWallPosition.y;
+		}		
+		if(padPosition.y > padY)
+		{
+			padY = padPosition.y;
 		}
-	}	
+	}								
 }
 
 void freeOpenGLProgram() {
 	delete shaderProgram; 
 	
-	glDeleteVertexArrays(1,&vao); //Usunięcie vao
-	glDeleteBuffers(1,&bufVertices); //Usunięcie VBO z wierzchołkami
-	glDeleteBuffers(1,&bufColors); //Usunięcie VBO z kolorami
-    glDeleteBuffers(1,&bufNormals);				
+	glDeleteVertexArrays(1,&vao); 
+	glDeleteBuffers(1,&bufCubeVertices); 	
+    glDeleteBuffers(1,&bufCubeNormals);				
 }
 
-void drawObject(GLuint vao, ShaderProgram *shaderProgram, glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color) {	
+void drawObject(GLuint bufVertices, GLuint bufNormals, int vertexCount, glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color) {	
 	shaderProgram->use();
 		
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(mP));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(mV));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));	
-    glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,0,-40,1);
+    
 	glUniform4fv(shaderProgram->getUniformLocation("color"),1, glm::value_ptr(color));		
 	
 	glBindVertexArray(vao);
+
+	assignVBOtoAttribute(shaderProgram,"position",bufVertices,4); 	
+    assignVBOtoAttribute(shaderProgram,"normal",bufNormals,4);
 	
 	glDrawArrays(GL_TRIANGLES,0,vertexCount);
 		
@@ -408,18 +288,18 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 			
 	padModel = glm::translate(padModel, glm::vec3(padDeltaX,0.0f,0.0f));
-	ballModel = glm::translate(ballModel, glm::vec3(ballDeltaX,ballDeltaY,0.0f));
-		
-	float padLeftEdgeX = (padModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-	float padRightEdgeX = (padModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-	float ballLeftEdgeX = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-	float ballRightEdgeX = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-	float ballUpperEdgeY = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
-	float ballBottomEdgeY = (ballModel*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
+	ballModel = glm::translate(ballModel, glm::vec3(ballDeltaX,ballDeltaY,0.0f));			
 
-	for(int i=4; i<vertexCount*4 - 3; i+=4)
+	float padLeftEdgeX = (padModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
+	float padRightEdgeX = (padModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
+	float ballLeftEdgeX = (ballModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
+	float ballRightEdgeX = (ballModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
+	float ballUpperEdgeY = (ballModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).y;
+	float ballBottomEdgeY = (ballModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).y;
+
+	for(int i=4; i<cubeVertexCount*4 - 3; i+=4)
 	{
-		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
+		glm::vec4 vertex = glm::vec4(cubeVertices[i], cubeVertices[i+1], cubeVertices[i+2], cubeVertices[i+3]);
 		glm::vec4 padPosition = padModel*vertex;
 		glm::vec4 ballPosition = ballModel*vertex;
 		if(padPosition.x > padLeftEdgeX)
@@ -466,11 +346,18 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 		}
 	}	
 
-	drawObject(vao,shaderProgram,P,V,ballModel, glm::vec4(1.0f,0.0f,1.0f,1.0f));	
-	drawObject(vao,shaderProgram,P,V,padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f));
-    drawObject(vao,shaderProgram,P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	 
-    drawObject(vao,shaderProgram,P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	
-    drawObject(vao,shaderProgram,P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));
+	drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount, P,V,ballModel, glm::vec4(1.0f,0.0f,1.0f,1.0f));		
+	drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f));
+    drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	 
+    drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	
+    drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));
+	for(int i=0; i<9*18; i++)
+	{
+		if(level1[i].canDraw())
+		{
+			drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,level1[i].getModel(), level1[i].getColor());
+		}
+	}
 		
 	glfwSwapBuffers(window);
 }
