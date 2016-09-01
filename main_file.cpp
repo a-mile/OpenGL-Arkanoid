@@ -259,7 +259,7 @@ glm::mat4 padModel = glm::mat4(1.0f);
 glm::mat4 ballModel = glm::mat4(1.0f);
 glm::mat4 P = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.2f, 200.0f); 		
 glm::mat4 V = glm::lookAt(
-		glm::vec3(0.0f, -30.0f, -100.0f),
+		glm::vec3(0.0f, -50.0f, -90.0f),
 		glm::vec3(0.0f, 20.0f, 0.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f));
 float leftWallX;
@@ -394,7 +394,7 @@ void drawObject(GLuint vao, ShaderProgram *shaderProgram, glm::mat4 mP, glm::mat
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(mP));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(mV));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));	
-    glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,-30,-50,1);
+    glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,0,-40,1);
 	glUniform4fv(shaderProgram->getUniformLocation("color"),1, glm::value_ptr(color));		
 	
 	glBindVertexArray(vao);
