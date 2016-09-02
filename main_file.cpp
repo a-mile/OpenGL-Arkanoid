@@ -133,6 +133,7 @@ float cubeNormals[]={
 glm::mat4 leftWallModel = glm::mat4(1.0f);
 glm::mat4 rightWallModel = glm::mat4(1.0f);
 glm::mat4 upperWallModel = glm::mat4(1.0f);
+glm::mat4 floorModel = glm::mat4(1.0f);
 glm::mat4 padModel = glm::mat4(1.0f);
 glm::mat4 ballModel = glm::mat4(1.0f);
 glm::mat4 P = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.2f, 200.0f); 		
@@ -157,7 +158,7 @@ void generateLevel1()
 			blockModel = glm::scale(blockModel, glm::vec3(5.1f,1.0f,1.0f));
 			blockModel = glm::translate(blockModel, glm::vec3(8.4f,(float)(68.0f-3.0f*j),0.0f));
 			blockModel = glm::translate(blockModel, glm::vec3((float)(-i*2.1f),0.0f,0.0f));			
-			Block* levelBlock = new Block(2, blockModel);
+			Block* levelBlock = new Block(1, blockModel);
 			levelBlock->calculateEdges();
 			level1[9*j + i] = levelBlock;
 		}
@@ -220,7 +221,9 @@ void initOpenGLProgram(GLFWwindow* window)
 	leftWallModel = glm::translate(leftWallModel, glm::vec3(49.0f,20.0f,0.0f));
     leftWallModel = glm::scale(leftWallModel, glm::vec3(1.0f,50.0f,1.0f)); 	
 	rightWallModel = glm::translate(rightWallModel, glm::vec3(-49.0f,20.0f,0.0f));
-    rightWallModel = glm::scale(rightWallModel, glm::vec3(1.0f,50.0f,1.0f)); 	
+    rightWallModel = glm::scale(rightWallModel, glm::vec3(1.0f,50.0f,1.0f));
+	floorModel = glm::translate(floorModel, glm::vec3(0.0f,20.0f,1.0f)); 	
+	floorModel = glm::scale(floorModel, glm::vec3(50.0f,50.0f,1.0f));	
 	padModel = glm::scale(padModel, glm::vec3(6.0f,1.0f,1.0f));
 	padModel = glm::translate(padModel, glm::vec3(0.0f,-29.0f,0.0f));
 	ballModel = glm::translate(ballModel, glm::vec3(0.0f,-27.0f,0.0f));	
@@ -355,8 +358,7 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 			if(ballRightEdgeX < level1[i]->getLeftEdgeX() && ballLeftEdgeX > level1[i]->getRightEdgeX())
 			{
 				if(ballUpperEdgeY > level1[i]->getBottomEdgeY() && ballUpperEdgeY < level1[i]->getUpperEdgeY())
-				{
-					//std::cout << i << std::endl;
+				{					
 					ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
 					ballVelocityY = -ballVelocityY;
 					
@@ -372,6 +374,7 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
     drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	 
     drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	
     drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));
+	drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,floorModel, glm::vec4(0.0f,1.0f,1.0f,1.0f));
 
 	for(int i=0; i<9*9; i++)
 	{
