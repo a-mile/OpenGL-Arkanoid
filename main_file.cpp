@@ -10,6 +10,7 @@
 
 #include "shaderprogram.h"
 #include "block.h"
+#include "lodepng.h"
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 
@@ -17,15 +18,18 @@ ShaderProgram *shaderProgram;
 
 GLuint bufCubeVertices; 
 GLuint bufCubeNormals;
+GLuint bufCubeTexCoords; 
 GLuint bufSphereVertices; 
 GLuint bufSphereNormals;
 GLuint vao;
-
-int cubeVertexCount = 36;
+GLuint tex0;
+GLuint tex1;
 
 float padVelocityX = 0;
 float ballVelocityX = 0;
 float ballVelocityY = 60;
+
+int cubeVertexCount = 36;
 
 float cubeVertices[]={
 				1.0f,-1.0f,-1.0f,1.0f,
@@ -130,6 +134,25 @@ float cubeNormals[]={
 				0.0f, 1.0f, 0.0f,0.0f,
 			};						
 
+float cubeTexCoords[]={
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+				
+				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
+				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
+			};
 glm::mat4 leftWallModel = glm::mat4(1.0f);
 glm::mat4 rightWallModel = glm::mat4(1.0f);
 glm::mat4 upperWallModel = glm::mat4(1.0f);
@@ -147,9 +170,30 @@ float upperWallY;
 float padY;
 Block* level1[9*9];
 
+GLuint readTexture(char* filename) {
+	GLuint tex;
+	glActiveTexture(GL_TEXTURE0);
+
+	//Wczytanie do pamięci komputera
+	std::vector<unsigned char> image;   //Alokuj wektor do wczytania obrazka
+	unsigned width, height;   //Zmienne do których wczytamy wymiary obrazka
+	//Wczytaj obrazek
+	unsigned error = lodepng::decode(image, width, height, filename);
+	
+	//Import do pamięci karty graficznej
+	glGenTextures(1, &tex); //Zainicjuj jeden uchwyt
+	glBindTexture(GL_TEXTURE_2D, tex); //Uaktywnij uchwyt
+									   //Wczytaj obrazek do pamięci KG skojarzonej z uchwytem
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+		GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)image.data());
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
+
+	return tex;
+}
 void generateLevel1()
 {
-
 	for(int j=0; j<9; j++)
 	{
 		for(int i=0; i<9; i++)
@@ -164,8 +208,6 @@ void generateLevel1()
 		}
 	}
 }
-
-
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {    
     if(action == GLFW_PRESS)
@@ -185,7 +227,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         padVelocityX = 0;
     }
 } 
-
 GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
 	GLuint handle;
 	
@@ -195,14 +236,12 @@ GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
 	
 	return handle;
 }
-
 void assignVBOtoAttribute(ShaderProgram *shaderProgram,char* attributeName, GLuint bufVBO, int vertexSize) {
 	GLuint location=shaderProgram->getAttribLocation(attributeName); 
 	glBindBuffer(GL_ARRAY_BUFFER,bufVBO);   
 	glEnableVertexAttribArray(location); 
 	glVertexAttribPointer(location,vertexSize,GL_FLOAT, GL_FALSE, 0, NULL); 
 }
-
 void initOpenGLProgram(GLFWwindow* window)
 {
 	glClearColor(0, 0, 1, 1); 	
@@ -210,11 +249,22 @@ void initOpenGLProgram(GLFWwindow* window)
 	glfwSetKeyCallback(window, key_callback);
 
 	shaderProgram=new ShaderProgram("vshader.txt",NULL,"fshader.txt");
-	glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,0,-40,1);
-	glGenVertexArrays(1,&vao); 
 
     bufCubeVertices=makeBuffer(cubeVertices, cubeVertexCount, sizeof(float)*4);		
-    bufCubeNormals=makeBuffer(cubeNormals, cubeVertexCount, sizeof(float)*4);  	
+    bufCubeNormals=makeBuffer(cubeNormals, cubeVertexCount, sizeof(float)*4);  
+	bufCubeTexCoords = makeBuffer(cubeTexCoords, cubeVertexCount, sizeof(float) * 2);
+
+	glGenVertexArrays(1,&vao); 
+	glBindVertexArray(vao);
+
+	assignVBOtoAttribute(shaderProgram,"position",bufCubeVertices,4); 	
+    assignVBOtoAttribute(shaderProgram,"normal",bufCubeNormals,4);
+	assignVBOtoAttribute(shaderProgram, "texCoord0", bufCubeTexCoords, 2);
+
+	glBindVertexArray(0);
+
+	tex0 = readTexture("brick.png");
+	tex1 = readTexture("brick_spec.png");	
 
 	upperWallModel = glm::translate(upperWallModel, glm::vec3(0.0f,70.0f,0.0f));
 	upperWallModel = glm::scale(upperWallModel, glm::vec3(50.0f,1.0f,1.0f));	
@@ -261,34 +311,36 @@ void initOpenGLProgram(GLFWwindow* window)
 		}
 	}						
 }
-
 void freeOpenGLProgram() {
 	delete shaderProgram; 
 	
 	glDeleteVertexArrays(1,&vao); 
 	glDeleteBuffers(1,&bufCubeVertices); 	
-    glDeleteBuffers(1,&bufCubeNormals);				
+    glDeleteBuffers(1,&bufCubeNormals);	
+	glDeleteBuffers(1, &bufCubeTexCoords);			
 }
-
-void drawObject(GLuint bufVertices, GLuint bufNormals, int vertexCount, glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color) {	
+void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color) {	
 	shaderProgram->use();
 		
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(mP));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(mV));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));	
-    
-	glUniform4fv(shaderProgram->getUniformLocation("color"),1, glm::value_ptr(color));		
+	glUniform4fv(shaderProgram->getUniformLocation("color"),1, glm::value_ptr(color));
+	glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,0,-40,1);
+	glUniform1i(shaderProgram->getUniformLocation("textureMap0"), 0);
+	glUniform1i(shaderProgram->getUniformLocation("textureMap1"), 1);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, tex1);			
 	
 	glBindVertexArray(vao);
-
-	assignVBOtoAttribute(shaderProgram,"position",bufVertices,4); 	
-    assignVBOtoAttribute(shaderProgram,"normal",bufNormals,4);
 	
-	glDrawArrays(GL_TRIANGLES,0,vertexCount);
+	glDrawArrays(GL_TRIANGLES,0,cubeVertexCount);
 		
 	glBindVertexArray(0);
 }
-
 void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ballDeltaY) {	
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 			
@@ -320,12 +372,10 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 		if(ballPosition.y < ballBottomEdgeY)
 			ballBottomEdgeY = ballPosition.y;
 	}		
-
 	if(padLeftEdgeX > leftWallX || padRightEdgeX < rightWallX)
 	{		
 		padModel = glm::translate(padModel, glm::vec3(-padDeltaX,0.0f,0.0f));		
 	}		
-
 	if(ballLeftEdgeX > leftWallX || ballRightEdgeX < rightWallX)
 	{
 		ballModel = glm::translate(ballModel, glm::vec3(-ballDeltaX,0.0f,0.0f));	
@@ -350,7 +400,6 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 			ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
 		}
 	}	
-
 	for(int i=0; i<9*9; i++)
 	{
 		if(level1[i]->canDraw())
@@ -369,25 +418,24 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 		}
 	}	
 
-	drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount, P,V,ballModel, glm::vec4(1.0f,0.0f,1.0f,1.0f));		
-	drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f));
-    drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	 
-    drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	
-    drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));
-	drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,floorModel, glm::vec4(0.0f,1.0f,1.0f,1.0f));
+	drawCube(P,V,ballModel, glm::vec4(1.0f,0.0f,1.0f,1.0f));		
+	drawCube(P,V, padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f));
+    drawCube(P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	 
+    drawCube(P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	
+    drawCube(P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));
+	drawCube(P,V,floorModel, glm::vec4(0.0f,1.0f,1.0f,1.0f));
 
 	for(int i=0; i<9*9; i++)
 	{
 		if(level1[i]->canDraw())
 		{			
-			drawObject(bufCubeVertices, bufCubeNormals, cubeVertexCount,P,V,level1[i]->getModel(), level1[i]->getColor());
+			drawCube(P,V,level1[i]->getModel(), level1[i]->getColor());
 			
 		}
 	}
 		
 	glfwSwapBuffers(window);
 }
-
 int main(){
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
