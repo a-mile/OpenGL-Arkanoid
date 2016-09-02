@@ -22,8 +22,15 @@ GLuint bufCubeTexCoords;
 GLuint bufSphereVertices; 
 GLuint bufSphereNormals;
 GLuint vao;
-GLuint tex0;
-GLuint tex1;
+GLuint floor0;
+GLuint floor1;
+GLuint wall0;
+GLuint wall1;
+GLuint pad0;
+GLuint pad1;
+GLuint block0;
+GLuint block1;
+
 
 float padVelocityX = 0;
 float ballVelocityX = 0;
@@ -263,8 +270,14 @@ void initOpenGLProgram(GLFWwindow* window)
 
 	glBindVertexArray(0);
 
-	tex0 = readTexture("brick.png");
-	tex1 = readTexture("brick_spec.png");	
+	floor0 = readTexture("plaster.png");
+	floor1 = readTexture("plaster_spec.png");
+	wall0 = readTexture("tiles.png");
+	wall1 = readTexture("tiles_spec.png");	
+	pad0 = readTexture("boards.png");
+	pad1 = readTexture("boards_spec.png");	
+	block0 = readTexture("cardboard.png");
+	block1 = readTexture("cardboard_spec.png");	
 
 	upperWallModel = glm::translate(upperWallModel, glm::vec3(0.0f,70.0f,0.0f));
 	upperWallModel = glm::scale(upperWallModel, glm::vec3(50.0f,1.0f,1.0f));	
@@ -319,7 +332,7 @@ void freeOpenGLProgram() {
     glDeleteBuffers(1,&bufCubeNormals);	
 	glDeleteBuffers(1, &bufCubeTexCoords);			
 }
-void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color) {	
+void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) {	
 	shaderProgram->use();
 		
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(mP));
@@ -418,18 +431,18 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 		}
 	}	
 
-	drawCube(P,V,ballModel, glm::vec4(1.0f,0.0f,1.0f,1.0f));		
-	drawCube(P,V, padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f));
-    drawCube(P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	 
-    drawCube(P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));	
-    drawCube(P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f));
-	drawCube(P,V,floorModel, glm::vec4(0.0f,1.0f,1.0f,1.0f));
+	drawCube(P,V,ballModel, glm::vec4(1.0f,0.0f,1.0f,1.0f),wall0, wall1);		
+	drawCube(P,V, padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f),pad0, pad1);
+    drawCube(P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f),wall0, wall1);	 
+    drawCube(P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f),wall0, wall1);	
+    drawCube(P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f),wall0, wall1);
+	drawCube(P,V,floorModel, glm::vec4(0.0f,1.0f,1.0f,1.0f),floor0, floor1);
 
 	for(int i=0; i<9*9; i++)
 	{
 		if(level1[i]->canDraw())
 		{			
-			drawCube(P,V,level1[i]->getModel(), level1[i]->getColor());
+			drawCube(P,V,level1[i]->getModel(), level1[i]->getColor(),block0, block1);
 			
 		}
 	}
