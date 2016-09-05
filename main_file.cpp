@@ -175,7 +175,10 @@ float leftWallX;
 float rightWallX;	
 float upperWallY;
 float padY;
-Block* level1[9*9];
+
+const int level1Columns = 9;
+const int level1Rows = 9;
+Block* level1Blocks[level1Columns * level1Rows];
 
 GLuint readTexture(char* filename) {
 	GLuint tex;
@@ -199,22 +202,20 @@ GLuint readTexture(char* filename) {
 
 	return tex;
 }
-void generateLevel1()
-{
-	for(int j=0; j<9; j++)
-	{
-		for(int i=0; i<9; i++)
-		{
-			glm::mat4 blockModel = glm::mat4(1.0f);
-			blockModel = glm::scale(blockModel, glm::vec3(5.1f,1.0f,1.0f));
-			blockModel = glm::translate(blockModel, glm::vec3(8.4f,(float)(68.0f-3.0f*j),0.0f));
-			blockModel = glm::translate(blockModel, glm::vec3((float)(-i*2.1f),0.0f,0.0f));	
-			int strength = 1;			
-			Block* levelBlock = new Block(strength, blockModel);
-			levelBlock->calculateEdges();
-			level1[9*j + i] = levelBlock;
-		}
-	}
+GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
+	GLuint handle;
+	
+	glGenBuffers(1,&handle);
+	glBindBuffer(GL_ARRAY_BUFFER,handle); 
+	glBufferData(GL_ARRAY_BUFFER, vertexCount*vertexSize, data, GL_STATIC_DRAW);
+	
+	return handle;
+}
+void assignVBOtoAttribute(ShaderProgram *shaderProgram,char* attributeName, GLuint bufVBO, int vertexSize) {
+	GLuint location=shaderProgram->getAttribLocation(attributeName); 
+	glBindBuffer(GL_ARRAY_BUFFER,bufVBO);   
+	glEnableVertexAttribArray(location); 
+	glVertexAttribPointer(location,vertexSize,GL_FLOAT, GL_FALSE, 0, NULL); 
 }
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {    
@@ -235,20 +236,32 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         padVelocityX = 0;
     }
 } 
-GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
-	GLuint handle;
+void freeOpenGLProgram() {
+	delete shaderProgram; 
 	
-	glGenBuffers(1,&handle);
-	glBindBuffer(GL_ARRAY_BUFFER,handle); 
-	glBufferData(GL_ARRAY_BUFFER, vertexCount*vertexSize, data, GL_STATIC_DRAW);
-	
-	return handle;
+	glDeleteVertexArrays(1,&vao); 
+	glDeleteBuffers(1,&bufCubeVertices); 	
+    glDeleteBuffers(1,&bufCubeNormals);	
+	glDeleteBuffers(1, &bufCubeTexCoords);			
 }
-void assignVBOtoAttribute(ShaderProgram *shaderProgram,char* attributeName, GLuint bufVBO, int vertexSize) {
-	GLuint location=shaderProgram->getAttribLocation(attributeName); 
-	glBindBuffer(GL_ARRAY_BUFFER,bufVBO);   
-	glEnableVertexAttribArray(location); 
-	glVertexAttribPointer(location,vertexSize,GL_FLOAT, GL_FALSE, 0, NULL); 
+void generatelevel1Blocks()
+{
+	for(int j=0; j< level1Rows; j++)
+	{
+		for(int i=0; i< level1Columns; i++)
+		{
+			glm::mat4 blockModel = glm::mat4(1.0f);
+			blockModel = glm::scale(blockModel, glm::vec3(5.1f,1.0f,1.0f));
+			blockModel = glm::translate(blockModel, glm::vec3(8.4f,(float)(68.0f-3.0f*j),0.0f));
+			blockModel = glm::translate(blockModel, glm::vec3((float)(-i*2.1f),0.0f,0.0f));	
+			int strength = 1;
+			if(i == 0 || i == 1 || i == level1Columns -1 || i == level1Columns -2)
+				strength = 0;			
+			Block* levelBlock = new Block(strength, blockModel);
+			levelBlock->calculateEdges();
+			level1Blocks[level1Columns*j + i] = levelBlock;
+		}
+	}
 }
 void initOpenGLProgram(GLFWwindow* window)
 {
@@ -292,7 +305,7 @@ void initOpenGLProgram(GLFWwindow* window)
 	padModel = glm::translate(padModel, glm::vec3(0.0f,-29.0f,0.0f));
 	ballModel = glm::translate(ballModel, glm::vec3(0.0f,-27.0f,0.0f));	
 
-	generateLevel1();
+	generatelevel1Blocks();
 
 	leftWallX = (leftWallModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
 	rightWallX = (rightWallModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
@@ -324,14 +337,6 @@ void initOpenGLProgram(GLFWwindow* window)
 			padY = padPosition.y;
 		}
 	}						
-}
-void freeOpenGLProgram() {
-	delete shaderProgram; 
-	
-	glDeleteVertexArrays(1,&vao); 
-	glDeleteBuffers(1,&bufCubeVertices); 	
-    glDeleteBuffers(1,&bufCubeNormals);	
-	glDeleteBuffers(1, &bufCubeTexCoords);			
 }
 void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) {	
 	shaderProgram->use();
@@ -386,10 +391,12 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 		if(ballPosition.y < ballBottomEdgeY)
 			ballBottomEdgeY = ballPosition.y;
 	}		
+	/* Zderzenia paletki ze ścianami bocznymi */
 	if(padLeftEdgeX > leftWallX || padRightEdgeX < rightWallX)
 	{		
 		padModel = glm::translate(padModel, glm::vec3(-padDeltaX,0.0f,0.0f));		
 	}		
+	/* Zderzenia piłeczki ze ścianami */
 	if(ballLeftEdgeX > leftWallX || ballRightEdgeX < rightWallX)
 	{
 		ballModel = glm::translate(ballModel, glm::vec3(-ballDeltaX,0.0f,0.0f));	
@@ -400,7 +407,8 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 		ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
 		ballVelocityY = -ballVelocityY;
 	}
-	if(ballBottomEdgeY < padY)
+	/* Zderzenia piłeczki z pletką */
+	if(ballBottomEdgeY < padY && ballUpperEdgeY > padY)
 	{
 		if(ballRightEdgeX < padLeftEdgeX && ballLeftEdgeX > padRightEdgeX)
 		{
@@ -414,21 +422,34 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
 			ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
 		}
 	}	
-	for(int i=0; i<9*9; i++)
+	/* Zderzenia piłeczki z przeszkodami */
+	for(int i=0; i<level1Columns * level1Rows; i++)
 	{
-		if(level1[i]->canDraw())
+		if(level1Blocks[i]->canDraw())
 		{
-			if(ballRightEdgeX < level1[i]->getLeftEdgeX() && ballLeftEdgeX > level1[i]->getRightEdgeX())
-			{
-				if(ballUpperEdgeY > level1[i]->getBottomEdgeY() && ballUpperEdgeY < level1[i]->getUpperEdgeY())
+			if(ballBottomEdgeY < level1Blocks[i]->getUpperEdgeY() && ballUpperEdgeY > level1Blocks[i]->getBottomEdgeY())
+			{	
+				if(ballRightEdgeX < level1Blocks[i]->getLeftEdgeX() && ballLeftEdgeX > level1Blocks[i]->getRightEdgeX())
 				{					
-					ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
-					ballVelocityY = -ballVelocityY;
+					float delta = level1Blocks[i]->getLeftEdgeX() - ballRightEdgeX;
+					if(ballLeftEdgeX - level1Blocks[i]->getRightEdgeX() < delta)
+						delta = ballLeftEdgeX - level1Blocks[i]->getRightEdgeX();					
+
+					if(delta > 1)
+					{
+						ballModel = glm::translate(ballModel, glm::vec3(0.0f,-ballDeltaY,0.0f));
+						ballVelocityY = -ballVelocityY;
+					}
+					else
+					{
+						ballModel = glm::translate(ballModel, glm::vec3(-ballDeltaX,0.0f,0.0f));
+						ballVelocityX = -ballVelocityX;
+					}
 					
-					level1[i]->hit();
+					level1Blocks[i]->hit();
 					break;
 				}
-			}
+			}			
 		}
 	}	
 
@@ -439,12 +460,11 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX, float ball
     drawCube(P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f),wall0, wall1);
 	drawCube(P,V,floorModel, glm::vec4(0.0f,1.0f,1.0f,1.0f),floor0, floor1);
 
-	for(int i=0; i<9*9; i++)
+	for(int i=0; i<level1Columns * level1Rows; i++)
 	{
-		if(level1[i]->canDraw())
+		if(level1Blocks[i]->canDraw())
 		{			
-			drawCube(P,V,level1[i]->getModel(), level1[i]->getColor(),block0, block1);
-			
+			drawCube(P,V,level1Blocks[i]->getModel(), level1Blocks[i]->getColor(), block0, block1);			
 		}
 	}
 		
@@ -487,7 +507,7 @@ int main(){
     {        			
 		padDeltaX = glfwGetTime() * padVelocityX;	
 		ballDeltaX = glfwGetTime() * ballVelocityX;		
-		ballDeltaY = glfwGetTime() * ballVelocityY;
+		ballDeltaY = glfwGetTime() * ballVelocityY;		
 
         glfwSetTime(0);
 
