@@ -12,7 +12,7 @@
 #include "block.h"
 #include "lodepng.h"
 
-const GLuint WIDTH = 800, HEIGHT = 600;
+const GLuint WIDTH = 1024, HEIGHT = 768;
 
 ShaderProgram *shaderProgram;
 
@@ -168,8 +168,8 @@ glm::mat4 padModel = glm::mat4(1.0f);
 glm::mat4 ballModel = glm::mat4(1.0f);
 glm::mat4 P = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.2f, 200.0f); 		
 glm::mat4 V = glm::lookAt(
-		glm::vec3(0.0f, -50.0f, -90.0f),
-		glm::vec3(0.0f, 20.0f, 0.0f),
+		glm::vec3(0.0f, -69.0f, -64.0f),
+		glm::vec3(0.0f, 21.0f, -1.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f));
 float leftWallX;
 float rightWallX;	
@@ -208,8 +208,9 @@ void generateLevel1()
 			glm::mat4 blockModel = glm::mat4(1.0f);
 			blockModel = glm::scale(blockModel, glm::vec3(5.1f,1.0f,1.0f));
 			blockModel = glm::translate(blockModel, glm::vec3(8.4f,(float)(68.0f-3.0f*j),0.0f));
-			blockModel = glm::translate(blockModel, glm::vec3((float)(-i*2.1f),0.0f,0.0f));			
-			Block* levelBlock = new Block(1, blockModel);
+			blockModel = glm::translate(blockModel, glm::vec3((float)(-i*2.1f),0.0f,0.0f));	
+			int strength = 1;			
+			Block* levelBlock = new Block(strength, blockModel);
 			levelBlock->calculateEdges();
 			level1[9*j + i] = levelBlock;
 		}
@@ -227,7 +228,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         if(key == GLFW_KEY_RIGHT)
 		{			
             padVelocityX = -10;
-		}
+		}				
     }
     if(action == GLFW_RELEASE)
     {
@@ -339,7 +340,7 @@ void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint 
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(mV));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));	
 	glUniform4fv(shaderProgram->getUniformLocation("color"),1, glm::value_ptr(color));
-	glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,0,-40,1);
+	glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,28,-40,1);	
 	glUniform1i(shaderProgram->getUniformLocation("textureMap0"), 0);
 	glUniform1i(shaderProgram->getUniformLocation("textureMap1"), 1);
 
@@ -483,7 +484,7 @@ int main(){
 	float ballDeltaY = 0; 	    		
 
     while(!glfwWindowShouldClose(window))
-    {        	
+    {        			
 		padDeltaX = glfwGetTime() * padVelocityX;	
 		ballDeltaX = glfwGetTime() * ballVelocityX;		
 		ballDeltaY = glfwGetTime() * ballVelocityY;
