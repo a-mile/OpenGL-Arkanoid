@@ -7,11 +7,13 @@ uniform mat4 P;
 uniform mat4 V;
 uniform mat4 M;
 uniform vec4 lightPos0;
+uniform vec4 lightPos1;
 uniform vec4 color;
 
 out vec4 vN; 
 out vec4 vV; 
-out vec4 vL; 
+out vec4 vL0;
+out vec4 vL1; 
 out vec4 ourColor; 
 out vec2 iTexCoord0;
 
@@ -20,7 +22,8 @@ void main()
     gl_Position=P*V*M*position;
 
     vN=normalize(V*M*normal); 
-	vL=normalize(V*lightPos0-V*M*position); 
+	vL0=normalize(V*lightPos0-V*M*position);
+    vL1=normalize(V*lightPos1-V*M*position); 
 	vV=normalize(vec4(0,0,0,1)-V*M*position);
 
     ourColor = color; 

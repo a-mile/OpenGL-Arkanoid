@@ -3,7 +3,8 @@
 in vec4 ourColor;
 in vec4 vN; 
 in vec4 vV; 
-in vec4 vL; 
+in vec4 vL0; 
+in vec4 vL1; 
 in vec2 iTexCoord0;
 
 out vec4 color;
@@ -14,9 +15,11 @@ uniform sampler2D textureMap1;
 void main()
 {
     vec4 mN=normalize(vN); //normalizuj interpolowany wektor normalny w przestrzeni oka
-	vec4 mL=normalize(vL); //normalizuj interpolowany wektor do obserwatora w przestrzeni oka
+	vec4 mL0=normalize(vL0); //normalizuj interpolowany wektor do obserwatora w przestrzeni oka
+	vec4 mL1=normalize(vL1);
 	vec4 mV=normalize(vV); //normalizuj interpolowany wektor do zrodla swiatla w przestrzeni oka
-	vec4 mR=reflect(-mL,mN); //oblicz wektor odbity w przestrzeni oka
+	vec4 mR0=reflect(-mL0,mN);
+	vec4 mR1=reflect(-mL1,mN); //oblicz wektor odbity w przestrzeni oka
 
     //vec4 Md = ourColor;
     //vec4 Ms = ourColor;
@@ -28,8 +31,10 @@ void main()
 	vec4 Ls=vec4(1,1,1,1); //Kolor swiatla odbijanego
 	float shininess=50; 
 
-	float nl=max(0,dot(mN,mL)); 
-	float rv=pow(max(0,dot(mN,mL)),shininess); 
+	float nl0=max(0,dot(mN,mL0));
+	float nl1=max(0,dot(mN,mL1)); 
+	float rv0=pow(max(0,dot(mN,mL0)),shininess);
+	float rv1=pow(max(0,dot(mN,mL1)),shininess); 
 
-	color=Ma*La+Md*Ld*nl+Ms*Ls*rv;     
+	color=Ma*La+Md*Ld*nl0+Ms*Ls*rv0 + Ma*La+Md*Ld*nl1+Ms*Ls*rv1;     
 }

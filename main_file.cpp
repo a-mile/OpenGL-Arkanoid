@@ -176,6 +176,13 @@ float rightWallX;
 float upperWallY;
 float padY;
 
+float a = 0;
+float b = 56;
+float c = -9;
+float d = 0;
+float e = -26;
+float f = -9;
+
 const int levelColumns = 9;
 const int levelRows = 9;
 Block* levelBlocks[levelColumns * levelRows];
@@ -229,7 +236,32 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         if(key == GLFW_KEY_RIGHT)
 		{			
             padVelocityX = -10;
-		}				
+		}
+		if(key == GLFW_KEY_Q)
+			a++;
+		if(key == GLFW_KEY_A)
+			a--;	
+		if(key == GLFW_KEY_W)
+			b++;	
+		if(key == GLFW_KEY_S)
+			b--;
+		if(key == GLFW_KEY_E)
+			c++;
+		if(key == GLFW_KEY_D)
+			c--;	
+		if(key == GLFW_KEY_R)
+			d++;	
+		if(key == GLFW_KEY_F)
+			d--;
+		if(key == GLFW_KEY_T)
+			e++;
+		if(key == GLFW_KEY_G)
+			e--;
+		if(key == GLFW_KEY_Y)
+			f++;	
+		if(key == GLFW_KEY_H)
+			f--;
+		std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<e<<" "<<f<<std::endl;								
     }
     if(action == GLFW_RELEASE)
     {
@@ -347,7 +379,8 @@ void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint 
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(mV));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));	
 	glUniform4fv(shaderProgram->getUniformLocation("color"),1, glm::value_ptr(color));
-	glUniform4f(shaderProgram->getUniformLocation("lightPos0"), 0,28,-40,1);	
+	glUniform4f(shaderProgram->getUniformLocation("lightPos0"), a,b,c,1);
+	glUniform4f(shaderProgram->getUniformLocation("lightPos1"), d,e,f,1);	
 	glUniform1i(shaderProgram->getUniformLocation("textureMap0"), 0);
 	glUniform1i(shaderProgram->getUniformLocation("textureMap1"), 1);
 
