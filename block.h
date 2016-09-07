@@ -5,9 +5,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <vector>
 
 class Block {
     private:
+        std::vector<glm::vec3> vertices;
         glm::vec4 color;
         glm::mat4 model;
         int strength;
@@ -16,7 +21,7 @@ class Block {
         float upperEdgeY;
         float bottomEdgeY;        
     public:
-        Block(int strength = 3, glm::mat4 model = glm::mat4(1.0f));
+        Block(int strength, glm::mat4 model, std::vector<glm::vec3> vertices);
         glm::mat4 getModel();
         glm::vec4 getColor();
         bool canDraw();

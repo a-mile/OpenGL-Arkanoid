@@ -34,9 +34,9 @@ GLuint pad1;
 GLuint block0;
 GLuint block1;
 
-float padVelocityX = 0;
-float ballVelocityX[] = {0,0,0};
-float ballVelocityY[] = {40,40,40};
+float padVelocityX = 0.0f;
+float ballVelocityX[] = {0.0f,0.0f,0.0f};
+float ballVelocityY[] = {30.0f,30.0f,30.0f};
 
 std::vector<glm::vec3> sphereVertices;
 std::vector<glm::vec2> sphereUvs;
@@ -46,17 +46,19 @@ std::vector<glm::vec3> cubeVertices;
 std::vector<glm::vec2> cubeUvs;
 std::vector<glm::vec3> cubeNormals;
 
-glm::mat4 leftWallModel = glm::mat4(1.0f);
-glm::mat4 rightWallModel = glm::mat4(1.0f);
-glm::mat4 upperWallModel = glm::mat4(1.0f);
-glm::mat4 floorModel = glm::mat4(1.0f);
-glm::mat4 padModel = glm::mat4(1.0f);
-glm::mat4 ballModel[] = {glm::mat4(1.0f),glm::mat4(1.0f),glm::mat4(1.0f)};
+glm::mat4 leftWallModel;
+glm::mat4 rightWallModel;
+glm::mat4 upperWallModel;
+glm::mat4 floorModel;
+glm::mat4 padModel;
+glm::mat4 ballModel[3];
+
 glm::mat4 P = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.2f, 200.0f); 		
 glm::mat4 V = glm::lookAt(
-		glm::vec3(0.0f, -69.0f, -64.0f),
+		glm::vec3(0.0f, -52.0f, -44.0f),
 		glm::vec3(0.0f, 21.0f, -1.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f));
+
 float leftWallX;
 float rightWallX;	
 float upperWallY;
@@ -69,7 +71,7 @@ float d = 0;
 float e = -26;
 float f = -9;
 
-const int levelColumns = 9;
+const int levelColumns = 7;
 const int levelRows = 9;
 Block* levelBlocks[levelColumns * levelRows];
 
@@ -147,7 +149,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			f++;	
 		if(key == GLFW_KEY_H)
 			f--;
-		std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<e<<" "<<f<<std::endl;								
+		//std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<e<<" "<<f<<std::endl;								
     }
     if(action == GLFW_RELEASE)
     {
@@ -169,15 +171,15 @@ void generatelevelBlocks()
 		for(int i=0; i< levelColumns; i++)
 		{
 			glm::mat4 blockModel = glm::mat4(1.0f);
-			blockModel = glm::scale(blockModel, glm::vec3(5.1f,1.0f,1.0f));
-			blockModel = glm::translate(blockModel, glm::vec3(8.4f,(float)(68.0f-3.0f*j),0.0f));
-			blockModel = glm::translate(blockModel, glm::vec3((float)(-i*2.1f),0.0f,0.0f));	
-			int strength = 1;
-			if(i == 0 || i == 1 || i == levelColumns -1 || i == levelColumns -2)
-				strength = 0;			
-			Block* levelBlock = new Block(strength, blockModel);
+			blockModel = glm::translate(blockModel, glm::vec3(21.0f - 7.0f * i,23.8f - 2.0f * j,0.0f));				
+			blockModel = glm::scale(blockModel, glm::vec3(6.5f,1.0f,1.0f));
+
+			int strength = 1;					
+			Block* levelBlock = new Block(strength, blockModel, cubeVertices);
 			levelBlock->calculateEdges();
-			levelBlocks[levelColumns*j + i] = levelBlock;
+			//std::cout<<levelBlock->getUpperEdgeY()<<" "<<levelBlock->getBottomEdgeY()<<std::endl;
+			levelBlocks[levelColumns * j + i] = levelBlock;
+			
 		}
 	}
 }
@@ -211,19 +213,35 @@ void initOpenGLProgram(GLFWwindow* window)
 	block0 = readTexture("cardboard.png");
 	block1 = readTexture("cardboard_spec.png");	
 
-	upperWallModel = glm::translate(upperWallModel, glm::vec3(0.0f,70.0f,0.0f));
-	upperWallModel = glm::scale(upperWallModel, glm::vec3(50.0f,1.0f,1.0f));	
-	leftWallModel = glm::translate(leftWallModel, glm::vec3(49.0f,20.0f,0.0f));
-    leftWallModel = glm::scale(leftWallModel, glm::vec3(1.0f,50.0f,1.0f)); 	
-	rightWallModel = glm::translate(rightWallModel, glm::vec3(-49.0f,20.0f,0.0f));
-    rightWallModel = glm::scale(rightWallModel, glm::vec3(1.0f,50.0f,1.0f));
-	floorModel = glm::translate(floorModel, glm::vec3(0.0f,20.0f,1.0f)); 	
-	floorModel = glm::scale(floorModel, glm::vec3(50.0f,50.0f,1.0f));	
+	leftWallModel = glm::mat4(1.0f);
+	leftWallModel = glm::translate(leftWallModel, glm::vec3(25.0f,0.0f,0.0f));
+	leftWallModel = glm::scale(leftWallModel, glm::vec3(1.0f,50.0f,1.0f));
+
+	rightWallModel = glm::mat4(1.0f);
+	rightWallModel = glm::translate(rightWallModel, glm::vec3(-25.0f,0.0f,0.0f));
+	rightWallModel = glm::scale(rightWallModel, glm::vec3(1.0f,50.0f,1.0f));
+
+	upperWallModel = glm::mat4(1.0f); 
+	upperWallModel = glm::translate(upperWallModel, glm::vec3(0.0f,24.5f,0.0f));
+	upperWallModel = glm::scale(upperWallModel, glm::vec3(50.0f,1.0f,1.0f));
+    
+	floorModel = glm::mat4(1.0f);
+	floorModel = glm::translate(floorModel, glm::vec3(0.0f,0.0f,1.0f));
+	floorModel = glm::scale(floorModel, glm::vec3(51.0f,50.0f,1.0f));	 	
+		
+	padModel = glm::mat4(1.0f);
+	padModel = glm::translate(padModel, glm::vec3(0.0f,-24.5f,0.0f));
 	padModel = glm::scale(padModel, glm::vec3(6.0f,1.0f,1.0f));
-	padModel = glm::translate(padModel, glm::vec3(0.0f,-29.0f,0.0f));
-	ballModel[0] = glm::translate(ballModel[0], glm::vec3(0.0f,-27.0f,0.0f));
-	ballModel[1] = glm::translate(ballModel[0], glm::vec3(3.0f,-27.0f,0.0f));
-	ballModel[2] = glm::translate(ballModel[0], glm::vec3(-3.0f,-27.0f,0.0f));	
+	
+	ballModel[0] = glm::mat4(1.0f);
+	ballModel[0] = glm::translate(ballModel[0], glm::vec3(0.0f,-23.0f,0.0f));
+	ballModel[0] = glm::scale(ballModel[0], glm::vec3(0.7f,0.7f,0.7f));
+	ballModel[1] = glm::mat4(1.0f);
+	ballModel[1] = glm::translate(ballModel[1], glm::vec3(3.0f,-23.0f,0.0f));
+	ballModel[1] = glm::scale(ballModel[1], glm::vec3(0.7f,0.7f,0.7f));
+	ballModel[2] = glm::mat4(1.0f);
+	ballModel[2] = glm::translate(ballModel[2], glm::vec3(-3.0f,-23.0f,0.0f));
+	ballModel[2] = glm::scale(ballModel[2], glm::vec3(0.7f,0.7f,0.7f));		
 
 	generatelevelBlocks();
 
@@ -324,6 +342,7 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 			
 	padModel = glm::translate(padModel, glm::vec3(padDeltaX,0.0f,0.0f));
+
 	for(int i=0;i<3;i++)
 	{
 		ballModel[i] = glm::translate(ballModel[i], glm::vec3(ballDeltaX[i],ballDeltaY[i],0.0f));		
@@ -350,12 +369,12 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 	{
 		ballLeftEdgeX[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
 		ballRightEdgeX[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
-		ballUpperEdgeY[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
-		ballBottomEdgeY[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
+		ballUpperEdgeY[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).y;
+		ballBottomEdgeY[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).y;
 
 		for(int i=0; i<sphereVertices.size(); i++)
 		{
-			glm::vec4 vertex = glm::vec4(cubeVertices[i].x, cubeVertices[i].y, cubeVertices[i].z, 1.0f);		
+			glm::vec4 vertex = glm::vec4(sphereVertices[i].x, sphereVertices[i].y, sphereVertices[i].z, 1.0f);		
 			glm::vec4 ballPosition = ballModel[j]*vertex;
 							
 			if(ballPosition.x > ballLeftEdgeX[j])
@@ -367,7 +386,8 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 			if(ballPosition.y < ballBottomEdgeY[j])
 				ballBottomEdgeY[j] = ballPosition.y;
 		}	
-	}	
+	}
+		
 	/* Zderzenia paletki ze ścianami bocznymi */
 	if(padLeftEdgeX > leftWallX || padRightEdgeX < rightWallX)
 	{		
@@ -425,7 +445,7 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 							ballModel[j] = glm::translate(ballModel[j], glm::vec3(-ballDeltaX[j],0.0f,0.0f));
 							ballVelocityX[j] = -ballVelocityX[j];
 						}
-						
+												
 						levelBlocks[i]->hit();
 						break;
 					}
@@ -483,13 +503,14 @@ int main(){
 
     initOpenGLProgram(window);  
 
-	float padDeltaX = 0; 
-	float ballDeltaX[] = {0,0,0};     
-	float ballDeltaY[] = {0,0,0}; 	    		
+	float padDeltaX = 0.0f; 
+	float ballDeltaX[] = {0.0f,0.0f,0.0f};     
+	float ballDeltaY[] = {0.0f,0.0f,0.0f}; 	    		
 
     while(!glfwWindowShouldClose(window))
     {        			
 		padDeltaX = glfwGetTime() * padVelocityX;
+
 		for(int i=0;i<3;i++)
 		{	
 			ballDeltaX[i] = glfwGetTime() * ballVelocityX[i];		

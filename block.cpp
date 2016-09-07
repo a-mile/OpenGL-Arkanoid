@@ -1,77 +1,24 @@
 #include "block.h"
 
-int vertexCount = 36;
 
-float vertices[]={
-            1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				-1.0f,-1.0f,-1.0f,1.0f,
-				
-				1.0f,-1.0f,-1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				
-				
-				-1.0f,-1.0f, 1.0f,1.0f,	
-				1.0f, 1.0f, 1.0f,1.0f,
-				1.0f,-1.0f, 1.0f,1.0f,
-				
-				-1.0f,-1.0f, 1.0f,1.0f,
-				-1.0f, 1.0f, 1.0f,1.0f,
-				1.0f, 1.0f, 1.0f,1.0f,
-				
-				1.0f,-1.0f, 1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				1.0f,-1.0f,-1.0f,1.0f,
-				
-				1.0f,-1.0f, 1.0f,1.0f,
-				1.0f, 1.0f, 1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f, 1.0f,1.0f,
-				-1.0f,-1.0f, 1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f, 1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				1.0f,-1.0f, 1.0f,1.0f,
-				1.0f,-1.0f,-1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f,-1.0f, 1.0f,1.0f,
-				1.0f,-1.0f, 1.0f,1.0f,
-				
-				-1.0f, 1.0f, 1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				1.0f, 1.0f, 1.0f,1.0f,
-				
-				-1.0f, 1.0f, 1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,				
-			};
-
-Block::Block(int strength, glm::mat4 model)
+Block::Block(int strength, glm::mat4 model, std::vector<glm::vec3> vertices)
 {
     Block::model = model;
-    Block::strength  = strength;   	
+    Block::strength  = strength;
+	Block::vertices = vertices;   	
 }
 
 void Block::calculateEdges()
 {
 
-	Block::leftEdgeX = (Block::model*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-		Block::rightEdgeX = (Block::model*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).x;
-		Block::upperEdgeY = (Block::model*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
-		Block::bottomEdgeY = (Block::model*glm::vec4(vertices[0], vertices[1], vertices[2], vertices[3])).y;
+	Block::leftEdgeX = (Block::model*glm::vec4(Block::vertices[0].x, Block::vertices[0].y, Block::vertices[0].z, 1.0f)).x;	
+	Block::rightEdgeX = (Block::model*glm::vec4(Block::vertices[0].x, Block::vertices[0].y, Block::vertices[0].z, 1.0f)).x;
+	Block::upperEdgeY = (Block::model*glm::vec4(Block::vertices[0].x, Block::vertices[0].y, Block::vertices[0].z, 1.0f)).y;
+	Block::bottomEdgeY = (Block::model*glm::vec4(Block::vertices[0].x, Block::vertices[0].y, Block::vertices[0].z, 1.0f)).y;
 
-	for(int i=4; i<vertexCount*4 - 3; i+=4)
-	{
-		
-
-		glm::vec4 vertex = glm::vec4(vertices[i], vertices[i+1], vertices[i+2], vertices[i+3]);
+	for(int i=0; i<Block::vertices.size(); i++)
+	{		
+		glm::vec4 vertex = glm::vec4(Block::vertices[i].x, Block::vertices[i].y, Block::vertices[i].z, 1.0f);
 		glm::vec4 blockPosition = Block::model*vertex;					
 		if(blockPosition.x > Block::leftEdgeX)
 			Block::leftEdgeX = blockPosition.x;
