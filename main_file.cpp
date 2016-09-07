@@ -55,8 +55,8 @@ glm::mat4 ballModel[3];
 
 glm::mat4 P = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.2f, 200.0f); 		
 glm::mat4 V = glm::lookAt(
-		glm::vec3(0.0f, -52.0f, -44.0f),
-		glm::vec3(0.0f, 21.0f, -1.0f),
+		glm::vec3(0.0f, -43.0f, -32.0f),
+		glm::vec3(0.0f, -9.0f, -1.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f));
 
 float leftWallX;
@@ -65,11 +65,11 @@ float upperWallY;
 float padY;
 
 float a = 0;
-float b = 56;
-float c = -9;
+float b = 12;
+float c = -5;
 float d = 0;
 float e = -26;
-float f = -9;
+float f = -3;
 
 const int levelColumns = 7;
 const int levelRows = 9;
@@ -149,7 +149,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			f++;	
 		if(key == GLFW_KEY_H)
 			f--;
-		//std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<e<<" "<<f<<std::endl;								
+		std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<e<<" "<<f<<std::endl;								
     }
     if(action == GLFW_RELEASE)
     {
@@ -237,10 +237,10 @@ void initOpenGLProgram(GLFWwindow* window)
 	ballModel[0] = glm::translate(ballModel[0], glm::vec3(0.0f,-23.0f,0.0f));
 	ballModel[0] = glm::scale(ballModel[0], glm::vec3(0.7f,0.7f,0.7f));
 	ballModel[1] = glm::mat4(1.0f);
-	ballModel[1] = glm::translate(ballModel[1], glm::vec3(3.0f,-23.0f,0.0f));
+	ballModel[1] = glm::translate(ballModel[1], glm::vec3(3.5f,-23.0f,0.0f));
 	ballModel[1] = glm::scale(ballModel[1], glm::vec3(0.7f,0.7f,0.7f));
 	ballModel[2] = glm::mat4(1.0f);
-	ballModel[2] = glm::translate(ballModel[2], glm::vec3(-3.0f,-23.0f,0.0f));
+	ballModel[2] = glm::translate(ballModel[2], glm::vec3(-3.5f,-23.0f,0.0f));
 	ballModel[2] = glm::scale(ballModel[2], glm::vec3(0.7f,0.7f,0.7f));		
 
 	generatelevelBlocks();
@@ -435,7 +435,7 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 						if(ballLeftEdgeX[j] - levelBlocks[i]->getRightEdgeX() < delta)
 							delta = ballLeftEdgeX[j] - levelBlocks[i]->getRightEdgeX();					
 
-						if(delta > 1)
+						if(delta > 0.5 || ballVelocityX[j] == 0.0f)
 						{
 							ballModel[j] = glm::translate(ballModel[j], glm::vec3(0.0f,-ballDeltaY[j],0.0f));
 							ballVelocityY[j] = -ballVelocityY[j];
@@ -508,7 +508,7 @@ int main(){
 	float ballDeltaY[] = {0.0f,0.0f,0.0f}; 	    		
 
     while(!glfwWindowShouldClose(window))
-    {        			
+    {        		
 		padDeltaX = glfwGetTime() * padVelocityX;
 
 		for(int i=0;i<3;i++)
