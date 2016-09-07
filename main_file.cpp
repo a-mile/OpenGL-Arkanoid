@@ -11,6 +11,7 @@
 #include "shaderprogram.h"
 #include "block.h"
 #include "lodepng.h"
+#include "objloader.h"
 
 const GLuint WIDTH = 1024, HEIGHT = 768;
 
@@ -21,6 +22,8 @@ GLuint bufCubeNormals;
 GLuint bufCubeTexCoords; 
 GLuint bufSphereVertices; 
 GLuint bufSphereNormals;
+GLuint bufSphereTexCoords;
+
 GLuint vao;
 GLuint floor0;
 GLuint floor1;
@@ -31,135 +34,18 @@ GLuint pad1;
 GLuint block0;
 GLuint block1;
 
-
 float padVelocityX = 0;
 float ballVelocityX[] = {0,0,0};
 float ballVelocityY[] = {40,40,40};
 
-int cubeVertexCount = 36;
+std::vector<glm::vec3> sphereVertices;
+std::vector<glm::vec2> sphereUvs;
+std::vector<glm::vec3> sphereNormals;
 
-float cubeVertices[]={
-				1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				-1.0f,-1.0f,-1.0f,1.0f,
-				
-				1.0f,-1.0f,-1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				
-				
-				-1.0f,-1.0f, 1.0f,1.0f,	
-				1.0f, 1.0f, 1.0f,1.0f,
-				1.0f,-1.0f, 1.0f,1.0f,
-				
-				-1.0f,-1.0f, 1.0f,1.0f,
-				-1.0f, 1.0f, 1.0f,1.0f,
-				1.0f, 1.0f, 1.0f,1.0f,
-				
-				1.0f,-1.0f, 1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				1.0f,-1.0f,-1.0f,1.0f,
-				
-				1.0f,-1.0f, 1.0f,1.0f,
-				1.0f, 1.0f, 1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f, 1.0f,1.0f,
-				-1.0f,-1.0f, 1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				-1.0f, 1.0f, 1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				1.0f,-1.0f, 1.0f,1.0f,
-				1.0f,-1.0f,-1.0f,1.0f,
-				
-				-1.0f,-1.0f,-1.0f,1.0f,
-				-1.0f,-1.0f, 1.0f,1.0f,
-				1.0f,-1.0f, 1.0f,1.0f,
-				
-				-1.0f, 1.0f, 1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				1.0f, 1.0f, 1.0f,1.0f,
-				
-				-1.0f, 1.0f, 1.0f,1.0f,
-				-1.0f, 1.0f,-1.0f,1.0f,
-				1.0f, 1.0f,-1.0f,1.0f,
-				
-			}; 				
+std::vector<glm::vec3> cubeVertices;
+std::vector<glm::vec2> cubeUvs;
+std::vector<glm::vec3> cubeNormals;
 
-float cubeNormals[]={
-
-				0.0f, 0.0f,-1.0f,0.0f,
-				0.0f, 0.0f,-1.0f,0.0f,
-				0.0f, 0.0f,-1.0f,0.0f,
-				
-				0.0f, 0.0f,-1.0f,0.0f,
-				0.0f, 0.0f,-1.0f,0.0f,
-				0.0f, 0.0f,-1.0f,0.0f,
-				
-				0.0f, 0.0f, 1.0f,0.0f,
-				0.0f, 0.0f, 1.0f,0.0f,
-				0.0f, 0.0f, 1.0f,0.0f,
-				
-				0.0f, 0.0f, 1.0f,0.0f,
-				0.0f, 0.0f, 1.0f,0.0f,
-				0.0f, 0.0f, 1.0f,0.0f,
-				
-				1.0f, 0.0f, 0.0f,0.0f,
-				1.0f, 0.0f, 0.0f,0.0f,
-				1.0f, 0.0f, 0.0f,0.0f,
-				
-				1.0f, 0.0f, 0.0f,0.0f,
-				1.0f, 0.0f, 0.0f,0.0f,
-				1.0f, 0.0f, 0.0f,0.0f,
-				
-				-1.0f, 0.0f, 0.0f,0.0f,
-				-1.0f, 0.0f, 0.0f,0.0f,
-				-1.0f, 0.0f, 0.0f,0.0f,
-				
-				-1.0f, 0.0f, 0.0f,0.0f,
-				-1.0f, 0.0f, 0.0f,0.0f,
-				-1.0f, 0.0f, 0.0f,0.0f,
-				
-				0.0f,-1.0f, 0.0f,0.0f,
-				0.0f,-1.0f, 0.0f,0.0f,
-				0.0f,-1.0f, 0.0f,0.0f,
-				
-				0.0f,-1.0f, 0.0f,0.0f,
-				0.0f,-1.0f, 0.0f,0.0f,
-				0.0f,-1.0f, 0.0f,0.0f,
-				
-				0.0f, 1.0f, 0.0f,0.0f,
-				0.0f, 1.0f, 0.0f,0.0f,
-				0.0f, 1.0f, 0.0f,0.0f,
-				
-				0.0f, 1.0f, 0.0f,0.0f,
-				0.0f, 1.0f, 0.0f,0.0f,
-				0.0f, 1.0f, 0.0f,0.0f,
-			};						
-
-float cubeTexCoords[]={
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-				
-				1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f, 
-				1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-			};
 glm::mat4 leftWallModel = glm::mat4(1.0f);
 glm::mat4 rightWallModel = glm::mat4(1.0f);
 glm::mat4 upperWallModel = glm::mat4(1.0f);
@@ -209,20 +95,20 @@ GLuint readTexture(char* filename) {
 
 	return tex;
 }
-GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
+GLuint makeBuffer(void *data, int vertexCount, int vertexsize) {
 	GLuint handle;
 	
 	glGenBuffers(1,&handle);
 	glBindBuffer(GL_ARRAY_BUFFER,handle); 
-	glBufferData(GL_ARRAY_BUFFER, vertexCount*vertexSize, data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertexCount*vertexsize, data, GL_STATIC_DRAW);
 	
 	return handle;
 }
-void assignVBOtoAttribute(ShaderProgram *shaderProgram,char* attributeName, GLuint bufVBO, int vertexSize) {
+void assignVBOtoAttribute(ShaderProgram *shaderProgram,char* attributeName, GLuint bufVBO, int vertexsize) {
 	GLuint location=shaderProgram->getAttribLocation(attributeName); 
 	glBindBuffer(GL_ARRAY_BUFFER,bufVBO);   
 	glEnableVertexAttribArray(location); 
-	glVertexAttribPointer(location,vertexSize,GL_FLOAT, GL_FALSE, 0, NULL); 
+	glVertexAttribPointer(location,vertexsize,GL_FLOAT, GL_FALSE, 0, NULL); 
 }
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {    
@@ -303,18 +189,18 @@ void initOpenGLProgram(GLFWwindow* window)
 
 	shaderProgram=new ShaderProgram("vshader.txt",NULL,"fshader.txt");
 
-    bufCubeVertices=makeBuffer(cubeVertices, cubeVertexCount, sizeof(float)*4);		
-    bufCubeNormals=makeBuffer(cubeNormals, cubeVertexCount, sizeof(float)*4);  
-	bufCubeTexCoords = makeBuffer(cubeTexCoords, cubeVertexCount, sizeof(float) * 2);
+	loadOBJ("cube.obj", cubeVertices, cubeUvs, cubeNormals);
+	loadOBJ("sphere.obj", sphereVertices, sphereUvs, sphereNormals);
+    
+	bufCubeVertices=makeBuffer(&cubeVertices[0], cubeVertices.size(), sizeof(float)*3);		
+    bufCubeNormals=makeBuffer(&cubeNormals[0], cubeNormals.size(), sizeof(float)*3);  
+	bufCubeTexCoords = makeBuffer(&cubeUvs[0], cubeUvs.size(), sizeof(float) * 2);
+	
+	bufSphereVertices=makeBuffer(&sphereVertices[0], sphereVertices.size(), sizeof(float)*3);		
+    bufSphereNormals=makeBuffer(&sphereNormals[0], sphereNormals.size(), sizeof(float)*3);  
+	bufSphereTexCoords = makeBuffer(&sphereUvs[0], sphereUvs.size(), sizeof(float) * 2);
 
 	glGenVertexArrays(1,&vao); 
-	glBindVertexArray(vao);
-
-	assignVBOtoAttribute(shaderProgram,"position",bufCubeVertices,4); 	
-    assignVBOtoAttribute(shaderProgram,"normal",bufCubeNormals,4);
-	assignVBOtoAttribute(shaderProgram, "texCoord0", bufCubeTexCoords, 2);
-
-	glBindVertexArray(0);
 
 	floor0 = readTexture("plaster.png");
 	floor1 = readTexture("plaster_spec.png");
@@ -341,14 +227,14 @@ void initOpenGLProgram(GLFWwindow* window)
 
 	generatelevelBlocks();
 
-	leftWallX = (leftWallModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
-	rightWallX = (rightWallModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
-	upperWallY = (upperWallModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).y;
-	padY = (padModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).y;
+	leftWallX = (leftWallModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
+	rightWallX = (rightWallModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
+	upperWallY = (upperWallModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).y;
+	padY = (padModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).y;
 
-	for(int i=4; i<cubeVertexCount*4 - 3; i+=4)
+	for(int i=0; i<cubeVertices.size(); i++)
 	{
-		glm::vec4 vertex = glm::vec4(cubeVertices[i], cubeVertices[i+1], cubeVertices[i+2], cubeVertices[i+3]);
+		glm::vec4 vertex = glm::vec4(cubeVertices[i].x, cubeVertices[i].y, cubeVertices[i].z, 1.0f);
 		glm::vec4 leftWallPosition = leftWallModel*vertex;
 		glm::vec4 rightWallPosition = rightWallModel*vertex;
 		glm::vec4 upperWallPosition = upperWallModel*vertex;
@@ -372,7 +258,15 @@ void initOpenGLProgram(GLFWwindow* window)
 		}
 	}						
 }
-void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) {	
+void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) {
+	glBindVertexArray(vao);
+
+	assignVBOtoAttribute(shaderProgram,"position",bufCubeVertices,3); 	
+    assignVBOtoAttribute(shaderProgram,"normal",bufCubeNormals,3);
+	assignVBOtoAttribute(shaderProgram, "texCoord0", bufCubeTexCoords, 2);
+
+	glBindVertexArray(0);
+
 	shaderProgram->use();
 		
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(mP));
@@ -391,7 +285,38 @@ void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint 
 	
 	glBindVertexArray(vao);
 	
-	glDrawArrays(GL_TRIANGLES,0,cubeVertexCount);
+	glDrawArrays(GL_TRIANGLES,0,cubeVertices.size());
+		
+	glBindVertexArray(0);
+}
+void drawSphere(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) {
+	glBindVertexArray(vao);
+
+	assignVBOtoAttribute(shaderProgram,"position",bufSphereVertices,3); 	
+    assignVBOtoAttribute(shaderProgram,"normal",bufSphereNormals,3);
+	assignVBOtoAttribute(shaderProgram, "texCoord0", bufSphereTexCoords, 2);
+
+	glBindVertexArray(0);
+		
+	shaderProgram->use();
+		
+	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(mP));
+	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(mV));
+	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"),1, false, glm::value_ptr(mM));	
+	glUniform4fv(shaderProgram->getUniformLocation("color"),1, glm::value_ptr(color));
+	glUniform4f(shaderProgram->getUniformLocation("lightPos0"), a,b,c,1);
+	glUniform4f(shaderProgram->getUniformLocation("lightPos1"), d,e,f,1);	
+	glUniform1i(shaderProgram->getUniformLocation("textureMap0"), 0);
+	glUniform1i(shaderProgram->getUniformLocation("textureMap1"), 1);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, tex1);			
+	
+	glBindVertexArray(vao);
+	
+	glDrawArrays(GL_TRIANGLES,0,sphereVertices.size());
 		
 	glBindVertexArray(0);
 }
@@ -404,11 +329,11 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 		ballModel[i] = glm::translate(ballModel[i], glm::vec3(ballDeltaX[i],ballDeltaY[i],0.0f));		
 	}	
 
-	float padLeftEdgeX = (padModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
-	float padRightEdgeX = (padModel*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
-	for(int i=4; i<cubeVertexCount*4 - 3; i+=4)
+	float padLeftEdgeX = (padModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
+	float padRightEdgeX = (padModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
+	for(int i=0; i<cubeVertices.size(); i++)
 	{
-		glm::vec4 vertex = glm::vec4(cubeVertices[i], cubeVertices[i+1], cubeVertices[i+2], cubeVertices[i+3]);
+		glm::vec4 vertex = glm::vec4(cubeVertices[i].x, cubeVertices[i].y, cubeVertices[i].z, 1.0f);
 		glm::vec4 padPosition = padModel*vertex;
 		if(padPosition.x > padLeftEdgeX)
 			padLeftEdgeX = padPosition.x;
@@ -423,14 +348,14 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 
 	for(int j=0; j<3; j++)
 	{
-		ballLeftEdgeX[j] = (ballModel[j]*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
-		ballRightEdgeX[j] = (ballModel[j]*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).x;
-		ballUpperEdgeY[j] = (ballModel[j]*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).y;
-		ballBottomEdgeY[j] = (ballModel[j]*glm::vec4(cubeVertices[0], cubeVertices[1], cubeVertices[2], cubeVertices[3])).y;
+		ballLeftEdgeX[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
+		ballRightEdgeX[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
+		ballUpperEdgeY[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
+		ballBottomEdgeY[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
 
-		for(int i=4; i<cubeVertexCount*4 - 3; i+=4)
+		for(int i=0; i<sphereVertices.size(); i++)
 		{
-			glm::vec4 vertex = glm::vec4(cubeVertices[i], cubeVertices[i+1], cubeVertices[i+2], cubeVertices[i+3]);		
+			glm::vec4 vertex = glm::vec4(cubeVertices[i].x, cubeVertices[i].y, cubeVertices[i].z, 1.0f);		
 			glm::vec4 ballPosition = ballModel[j]*vertex;
 							
 			if(ballPosition.x > ballLeftEdgeX[j])
@@ -511,7 +436,7 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 
 	for(int i=0;i<3;i++)
 	{
-		drawCube(P,V,ballModel[i], glm::vec4(1.0f,0.0f,1.0f,1.0f),wall0, wall1);	
+		drawSphere(P,V,ballModel[i], glm::vec4(1.0f,0.0f,1.0f,1.0f),wall0, wall1);	
 	}	
 	drawCube(P,V, padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f),pad0, pad1);
     drawCube(P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f),wall0, wall1);	 
