@@ -34,10 +34,12 @@ GLuint pad0;
 GLuint pad1;
 GLuint block0;
 GLuint block1;
+GLuint ball0;
+GLuint ball1;
 
 float padVelocityX = 0.0f;
 float ballVelocityX[] = {0.0f,0.0f,0.0f};
-float ballVelocityY[] = {20.0f,20.0f,20.0f};
+float ballVelocityY[] = {10.0f,10.0f,10.0f};
 
 std::vector<glm::vec3> sphereVertices;
 std::vector<glm::vec2> sphereUvs;
@@ -76,8 +78,8 @@ float ballWidth[3];
 float ballHeight[3];
 
 float padPositionX = 0.0f;
-float ballPositionX[] = {3.5f,0.0f,-3.5f};
-float ballPositionY[] = {-23.0f,-23.0f,-23.0f};
+float ballPositionX[] = {3.0f,0.0f,-3.3f};
+float ballPositionY[] = {-23.0f,-21.0f,-19.0f};
 
 float a = 0;
 float b = 12;
@@ -87,7 +89,7 @@ float e = -26;
 float f = -3;
 
 const int levelColumns = 7;
-const int levelRows = 9;
+const int levelRows = 12;
 Block* levelBlocks[levelColumns * levelRows];
 
 GLuint readTexture(char* filename) {
@@ -134,11 +136,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     	    glfwSetWindowShouldClose(window, GL_TRUE);
         if(key == GLFW_KEY_LEFT)
 		{		
-        	padVelocityX = 10;
+        	padVelocityX = 30;
 		}
         if(key == GLFW_KEY_RIGHT)
 		{			
-            padVelocityX = -10;
+            padVelocityX = -30;
 		}
 		if(key == GLFW_KEY_Q)
 			a++;
@@ -189,7 +191,9 @@ void generatelevelBlocks()
 			blockModel = glm::translate(blockModel, glm::vec3(21.0f - 7.0f * j,23.8f - 2.0f * i,0.0f));				
 			blockModel = glm::scale(blockModel, glm::vec3(6.5f,1.0f,1.0f));
 
-			int strength = 1;					
+			int strength = 1;
+			//if(j<i || j>levelColumns - i - 1)
+			//	strength = 0;					
 			Block* levelBlock = new Block(strength, blockModel, cubeVertices);
 			levelBlock->calculateEdges();			
 			levelBlocks[levelColumns * i + j] = levelBlock;
@@ -224,8 +228,10 @@ void initOpenGLProgram(GLFWwindow* window)
 	wall1 = readTexture("tiles_spec.png");	
 	pad0 = readTexture("boards.png");
 	pad1 = readTexture("boards_spec.png");	
-	block0 = readTexture("cardboard.png");
-	block1 = readTexture("cardboard_spec.png");	
+	block0 = readTexture("metal.png");
+	block1 = readTexture("metal_spec.png");	
+	ball0 = readTexture("metal.png");
+	ball1 = readTexture("metal_spec.png");	
 
 	leftWallModel = glm::mat4(1.0f);
 	leftWallModel = glm::translate(leftWallModel, glm::vec3(25.0f,0.0f,0.0f));
@@ -251,7 +257,7 @@ void initOpenGLProgram(GLFWwindow* window)
 	{
 		ballModel[i] = glm::mat4(1.0f);
 		ballModel[i] = glm::translate(ballModel[i], glm::vec3(ballPositionX[i],ballPositionY[i],0.0f));
-		ballModel[i] = glm::scale(ballModel[i], glm::vec3(0.7f,0.7f,0.7f));
+		ballModel[i] = glm::scale(ballModel[i], glm::vec3(0.8f,0.8f,0.8f));
 	}								
 
 	generatelevelBlocks();
@@ -307,7 +313,8 @@ void initOpenGLProgram(GLFWwindow* window)
 		}					
 	}							
 }
-void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) {
+void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) 
+{
 	glBindVertexArray(vao);
 
 	assignVBOtoAttribute(shaderProgram,"position",bufCubeVertices,3); 	
@@ -338,7 +345,8 @@ void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint 
 		
 	glBindVertexArray(0);
 }
-void drawSphere(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) {
+void drawSphere(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) 
+{
 	glBindVertexArray(vao);
 
 	assignVBOtoAttribute(shaderProgram,"position",bufSphereVertices,3); 	
@@ -409,10 +417,10 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 			ballPositionY[i] -= ballDeltaY[i];
 			ballUpperEdgeY[i] -= ballDeltaY[i];
 			ballBottomEdgeY[i] -= ballDeltaY[i];
-		}		
-		if(ballBottomEdgeY[i] < padY && ballUpperEdgeY[i] > padY)
+		}	
+		if(ballRightEdgeX[i] < padLeftEdgeX && ballLeftEdgeX[i] > padRightEdgeX)			
 		{
-			if(ballRightEdgeX[i] < padLeftEdgeX && ballLeftEdgeX[i] > padRightEdgeX)
+			if(ballBottomEdgeY[i] < padY && ballUpperEdgeY[i] > padY)	
 			{
 				float ballMiddle = (ballLeftEdgeX[i] + ballRightEdgeX[i])/2;
 				float factor = ((ballMiddle - padRightEdgeX) / (padLeftEdgeX - padRightEdgeX))*2 - 1;
@@ -425,48 +433,53 @@ void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ba
 				ballBottomEdgeY[i] -= ballDeltaY[i];			
 			}
 		}	
-		for(int j=0; j<levelColumns * levelRows; j++)
+		for(int j=0; j< levelColumns * levelRows; j++)
 		{
 			if(levelBlocks[j]->canDraw())
 			{
-				if(ballBottomEdgeY[i] < levelBlocks[j]->getUpperEdgeY() && ballUpperEdgeY[i] > levelBlocks[j]->getBottomEdgeY())
-				{	
+				if((ballBottomEdgeY[i] < levelBlocks[j]->getUpperEdgeY() && ballUpperEdgeY[i] > levelBlocks[j]->getUpperEdgeY()) ||
+					(ballUpperEdgeY[i] > levelBlocks[j]->getBottomEdgeY() && ballBottomEdgeY[i] < levelBlocks[j]->getBottomEdgeY()))
+				{
+					if(ballLeftEdgeX[i] < levelBlocks[j]->getLeftEdgeX() && ballRightEdgeX[i] > levelBlocks[j]->getRightEdgeX()) 						
+					{
+						ballVelocityY[i] = -ballVelocityY[i];
+						ballPositionY[i] -= ballDeltaY[i];
+						ballUpperEdgeY[i] -= ballDeltaY[i];
+						ballBottomEdgeY[i] -= ballDeltaY[i];
+						levelBlocks[j]->hit();
+						break;
+					}
 					if(ballRightEdgeX[i] < levelBlocks[j]->getLeftEdgeX() && ballLeftEdgeX[i] > levelBlocks[j]->getRightEdgeX())
-					{					
-						float delta = levelBlocks[j]->getLeftEdgeX() - ballRightEdgeX[i];
-						if(ballLeftEdgeX[i] - levelBlocks[j]->getRightEdgeX() < delta)
-							delta = ballLeftEdgeX[i] - levelBlocks[j]->getRightEdgeX();					
-
-						if(delta > 0.5 || ballVelocityX[i] == 0.0f)
-						{							
+					{
+						if(ballVelocityX[i] < 2)
+						{
 							ballVelocityY[i] = -ballVelocityY[i];
 							ballPositionY[i] -= ballDeltaY[i];
 							ballUpperEdgeY[i] -= ballDeltaY[i];
 							ballBottomEdgeY[i] -= ballDeltaY[i];
+							levelBlocks[j]->hit();
+							break;
 						}
-						else
-						{							
-							ballVelocityX[i] = -ballVelocityX[i];
-							ballPositionX[i] -= ballDeltaX[i];
-							ballLeftEdgeX[i] += ballDeltaX[i];
-							ballRightEdgeX[i] += ballDeltaX[i];
-						}
-												
+						ballVelocityX[i] = -ballVelocityX[i];
+						ballPositionX[i] -= ballDeltaX[i];
+						ballLeftEdgeX[i] += ballDeltaX[i];
+						ballRightEdgeX[i] += ballDeltaX[i];
 						levelBlocks[j]->hit();
 						break;
 					}
-				}			
+				}																																											
 			}
-		}			
-
+		}
 		ballModel[i] = glm::mat4(1.0f);
 		ballModel[i] = glm::translate(ballModel[i], glm::vec3(ballPositionX[i],ballPositionY[i],0.0f));
-		ballModel[i] = glm::scale(ballModel[i], glm::vec3(0.7f,0.7f,0.7f));
-	}													
+		ballModel[i] = glm::scale(ballModel[i], glm::vec3(0.8f,0.8f,0.8f));					
+	}		
+
+																			
 
 	for(int i=0;i<3;i++)
 	{
-		drawSphere(P,V,ballModel[i], glm::vec4(1.0f,0.0f,1.0f,1.0f),wall0, wall1);	
+		drawSphere(P,V,ballModel[i], glm::vec4(1.0f,0.0f,1.0f,1.0f),ball0, ball1);	
 	}	
 
 	drawCube(P,V,padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f),pad0, pad1);
