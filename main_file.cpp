@@ -25,6 +25,7 @@ GLuint bufSphereNormals;
 GLuint bufSphereTexCoords;
 
 GLuint vao;
+
 GLuint floor0;
 GLuint floor1;
 GLuint wall0;
@@ -36,7 +37,7 @@ GLuint block1;
 
 float padVelocityX = 0.0f;
 float ballVelocityX[] = {0.0f,0.0f,0.0f};
-float ballVelocityY[] = {30.0f,30.0f,30.0f};
+float ballVelocityY[] = {20.0f,20.0f,20.0f};
 
 std::vector<glm::vec3> sphereVertices;
 std::vector<glm::vec2> sphereUvs;
@@ -63,6 +64,20 @@ float leftWallX;
 float rightWallX;	
 float upperWallY;
 float padY;
+float padRightEdgeX;
+float padLeftEdgeX;
+float padWidth;
+float padHeigth;
+float ballLeftEdgeX[3];
+float ballRightEdgeX[3];
+float ballUpperEdgeY[3];
+float ballBottomEdgeY[3];
+float ballWidth[3];
+float ballHeight[3];
+
+float padPositionX = 0.0f;
+float ballPositionX[] = {3.5f,0.0f,-3.5f};
+float ballPositionY[] = {-23.0f,-23.0f,-23.0f};
 
 float a = 0;
 float b = 12;
@@ -166,19 +181,18 @@ void freeOpenGLProgram() {
 }
 void generatelevelBlocks()
 {
-	for(int j=0; j< levelRows; j++)
+	for(int i=0; i< levelRows; i++)
 	{
-		for(int i=0; i< levelColumns; i++)
+		for(int j=0; j< levelColumns; j++)
 		{
 			glm::mat4 blockModel = glm::mat4(1.0f);
-			blockModel = glm::translate(blockModel, glm::vec3(21.0f - 7.0f * i,23.8f - 2.0f * j,0.0f));				
+			blockModel = glm::translate(blockModel, glm::vec3(21.0f - 7.0f * j,23.8f - 2.0f * i,0.0f));				
 			blockModel = glm::scale(blockModel, glm::vec3(6.5f,1.0f,1.0f));
 
 			int strength = 1;					
 			Block* levelBlock = new Block(strength, blockModel, cubeVertices);
-			levelBlock->calculateEdges();
-			//std::cout<<levelBlock->getUpperEdgeY()<<" "<<levelBlock->getBottomEdgeY()<<std::endl;
-			levelBlocks[levelColumns * j + i] = levelBlock;
+			levelBlock->calculateEdges();			
+			levelBlocks[levelColumns * i + j] = levelBlock;
 			
 		}
 	}
@@ -227,28 +241,27 @@ void initOpenGLProgram(GLFWwindow* window)
     
 	floorModel = glm::mat4(1.0f);
 	floorModel = glm::translate(floorModel, glm::vec3(0.0f,0.0f,1.0f));
-	floorModel = glm::scale(floorModel, glm::vec3(51.0f,50.0f,1.0f));	 	
-		
+	floorModel = glm::scale(floorModel, glm::vec3(51.0f,50.0f,1.0f));	 
+
 	padModel = glm::mat4(1.0f);
-	padModel = glm::translate(padModel, glm::vec3(0.0f,-24.5f,0.0f));
+	padModel = glm::translate(padModel, glm::vec3(padPositionX,-24.5f,0.0f));
 	padModel = glm::scale(padModel, glm::vec3(6.0f,1.0f,1.0f));
-	
-	ballModel[0] = glm::mat4(1.0f);
-	ballModel[0] = glm::translate(ballModel[0], glm::vec3(0.0f,-23.0f,0.0f));
-	ballModel[0] = glm::scale(ballModel[0], glm::vec3(0.7f,0.7f,0.7f));
-	ballModel[1] = glm::mat4(1.0f);
-	ballModel[1] = glm::translate(ballModel[1], glm::vec3(3.5f,-23.0f,0.0f));
-	ballModel[1] = glm::scale(ballModel[1], glm::vec3(0.7f,0.7f,0.7f));
-	ballModel[2] = glm::mat4(1.0f);
-	ballModel[2] = glm::translate(ballModel[2], glm::vec3(-3.5f,-23.0f,0.0f));
-	ballModel[2] = glm::scale(ballModel[2], glm::vec3(0.7f,0.7f,0.7f));		
+
+	for(int i=0;i<3;i++)
+	{
+		ballModel[i] = glm::mat4(1.0f);
+		ballModel[i] = glm::translate(ballModel[i], glm::vec3(ballPositionX[i],ballPositionY[i],0.0f));
+		ballModel[i] = glm::scale(ballModel[i], glm::vec3(0.7f,0.7f,0.7f));
+	}								
 
 	generatelevelBlocks();
 
 	leftWallX = (leftWallModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
 	rightWallX = (rightWallModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
 	upperWallY = (upperWallModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).y;
-	padY = (padModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).y;
+	padY = (padModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).y;	
+	padLeftEdgeX = (padModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
+	padRightEdgeX = (padModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
 
 	for(int i=0; i<cubeVertices.size(); i++)
 	{
@@ -258,23 +271,41 @@ void initOpenGLProgram(GLFWwindow* window)
 		glm::vec4 upperWallPosition = upperWallModel*vertex;
 		glm::vec4 padPosition = padModel*vertex;
 
-		if(leftWallPosition.x < leftWallX)
+		if(leftWallPosition.x < leftWallX)		
+			leftWallX = leftWallPosition.x;			
+		if(rightWallPosition.x > rightWallX)		
+			rightWallX = rightWallPosition.x;		
+		if(upperWallPosition.y < upperWallY)		
+			upperWallY = upperWallPosition.y;		
+		if(padPosition.y > padY)		
+			padY = padPosition.y;		
+		if(padPosition.x > padLeftEdgeX)
+			padLeftEdgeX = padPosition.x;
+		if(padPosition.x < padRightEdgeX)
+			padRightEdgeX = padPosition.x;
+	}
+	for(int i=0; i<3; i++)
+	{
+		ballLeftEdgeX[i] = (ballModel[i]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
+		ballRightEdgeX[i] = (ballModel[i]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
+		ballUpperEdgeY[i] = (ballModel[i]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).y;
+		ballBottomEdgeY[i] = (ballModel[i]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).y;
+
+		for(int j=0; j<sphereVertices.size(); j++)
 		{
-			leftWallX = leftWallPosition.x;
-		}		
-		if(rightWallPosition.x > rightWallX)
-		{
-			rightWallX = rightWallPosition.x;
-		}		
-		if(upperWallPosition.y < upperWallY)
-		{
-			upperWallY = upperWallPosition.y;
-		}		
-		if(padPosition.y > padY)
-		{
-			padY = padPosition.y;
-		}
-	}						
+			glm::vec4 vertex = glm::vec4(sphereVertices[j].x, sphereVertices[j].y, sphereVertices[j].z, 1.0f);		
+			glm::vec4 ballPosition = ballModel[i]*vertex;
+							
+			if(ballPosition.x > ballLeftEdgeX[i])
+				ballLeftEdgeX[i] = ballPosition.x;
+			if(ballPosition.x < ballRightEdgeX[i])
+				ballRightEdgeX[i] = ballPosition.x;
+			if(ballPosition.y > ballUpperEdgeY[i])
+				ballUpperEdgeY[i] = ballPosition.y;
+			if(ballPosition.y < ballBottomEdgeY[i])
+				ballBottomEdgeY[i] = ballPosition.y;
+		}					
+	}							
 }
 void drawCube(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuint tex0, GLuint tex1) {
 	glBindVertexArray(vao);
@@ -340,125 +371,105 @@ void drawSphere(glm::mat4 mP, glm::mat4 mV, glm::mat4 mM, glm::vec4 color, GLuin
 }
 void drawScene(GLFWwindow* window, float padDeltaX, float ballDeltaX[], float ballDeltaY[]) {	
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-			
-	padModel = glm::translate(padModel, glm::vec3(padDeltaX,0.0f,0.0f));
+				
+	padPositionX += padDeltaX;
+	padLeftEdgeX += padDeltaX;
+	padRightEdgeX += padDeltaX;
+
+	if(padLeftEdgeX > leftWallX || padRightEdgeX < rightWallX)
+	{
+		padPositionX -= padDeltaX;
+		padLeftEdgeX -= padDeltaX;
+		padRightEdgeX -= padDeltaX;	
+	}
+
+	padModel = glm::mat4(1.0f);
+	padModel = glm::translate(padModel, glm::vec3(padPositionX,-24.5f,0.0f));
+	padModel = glm::scale(padModel, glm::vec3(6.0f,1.0f,1.0f));
 
 	for(int i=0;i<3;i++)
 	{
-		ballModel[i] = glm::translate(ballModel[i], glm::vec3(ballDeltaX[i],ballDeltaY[i],0.0f));		
-	}	
+		ballPositionX[i] += ballDeltaX[i];
+		ballPositionY[i] += ballDeltaY[i];
+		ballLeftEdgeX[i] += ballDeltaX[i];
+		ballRightEdgeX[i] += ballDeltaX[i];
+		ballUpperEdgeY[i] += ballDeltaY[i];
+		ballBottomEdgeY[i] += ballDeltaY[i];
 
-	float padLeftEdgeX = (padModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
-	float padRightEdgeX = (padModel*glm::vec4(cubeVertices[0].x, cubeVertices[0].y, cubeVertices[0].z, 1.0f)).x;
-	for(int i=0; i<cubeVertices.size(); i++)
-	{
-		glm::vec4 vertex = glm::vec4(cubeVertices[i].x, cubeVertices[i].y, cubeVertices[i].z, 1.0f);
-		glm::vec4 padPosition = padModel*vertex;
-		if(padPosition.x > padLeftEdgeX)
-			padLeftEdgeX = padPosition.x;
-		if(padPosition.x < padRightEdgeX)
-			padRightEdgeX = padPosition.x;
-	}
-
-	float ballLeftEdgeX[3];
-	float ballRightEdgeX[3];
-	float ballUpperEdgeY[3];
-	float ballBottomEdgeY[3];
-
-	for(int j=0; j<3; j++)
-	{
-		ballLeftEdgeX[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
-		ballRightEdgeX[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).x;
-		ballUpperEdgeY[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).y;
-		ballBottomEdgeY[j] = (ballModel[j]*glm::vec4(sphereVertices[0].x, sphereVertices[0].y, sphereVertices[0].z, 1.0f)).y;
-
-		for(int i=0; i<sphereVertices.size(); i++)
-		{
-			glm::vec4 vertex = glm::vec4(sphereVertices[i].x, sphereVertices[i].y, sphereVertices[i].z, 1.0f);		
-			glm::vec4 ballPosition = ballModel[j]*vertex;
-							
-			if(ballPosition.x > ballLeftEdgeX[j])
-				ballLeftEdgeX[j] = ballPosition.x;
-			if(ballPosition.x < ballRightEdgeX[j])
-				ballRightEdgeX[j] = ballPosition.x;
-			if(ballPosition.y > ballUpperEdgeY[j])
-				ballUpperEdgeY[j] = ballPosition.y;
-			if(ballPosition.y < ballBottomEdgeY[j])
-				ballBottomEdgeY[j] = ballPosition.y;
-		}	
-	}
-		
-	/* Zderzenia paletki ze ścianami bocznymi */
-	if(padLeftEdgeX > leftWallX || padRightEdgeX < rightWallX)
-	{		
-		padModel = glm::translate(padModel, glm::vec3(-padDeltaX,0.0f,0.0f));		
-	}	
-
-	for(int j=0;j<3;j++)
-	{	
-		/* Zderzenia piłeczki ze ścianami */
-		if(ballLeftEdgeX[j] > leftWallX || ballRightEdgeX[j] < rightWallX)
-		{
-			ballModel[j] = glm::translate(ballModel[j], glm::vec3(-ballDeltaX[j],0.0f,0.0f));	
-			ballVelocityX[j] = -ballVelocityX[j];	
+		if(ballLeftEdgeX[i] > leftWallX || ballRightEdgeX[i] < rightWallX)
+		{				
+			ballVelocityX[i] = -ballVelocityX[i];	
+			ballPositionX[i] -= ballDeltaX[i];
+			ballLeftEdgeX[i] -= ballDeltaX[i];
+			ballRightEdgeX[i] -= ballDeltaX[i];
 		}
-		if(ballUpperEdgeY[j] > upperWallY)
+		if(ballUpperEdgeY[i] > upperWallY)
+		{			
+			ballVelocityY[i] = -ballVelocityY[i];
+			ballPositionY[i] -= ballDeltaY[i];
+			ballUpperEdgeY[i] -= ballDeltaY[i];
+			ballBottomEdgeY[i] -= ballDeltaY[i];
+		}		
+		if(ballBottomEdgeY[i] < padY && ballUpperEdgeY[i] > padY)
 		{
-			ballModel[j] = glm::translate(ballModel[j], glm::vec3(0.0f,-ballDeltaY[j],0.0f));
-			ballVelocityY[j] = -ballVelocityY[j];
-		}
-		/* Zderzenia piłeczki z pletką */
-		if(ballBottomEdgeY[j] < padY && ballUpperEdgeY[j] > padY)
-		{
-			if(ballRightEdgeX[j] < padLeftEdgeX && ballLeftEdgeX[j] > padRightEdgeX)
+			if(ballRightEdgeX[i] < padLeftEdgeX && ballLeftEdgeX[i] > padRightEdgeX)
 			{
-				float ballMiddle = (ballLeftEdgeX[j] + ballRightEdgeX[j])/2;
+				float ballMiddle = (ballLeftEdgeX[i] + ballRightEdgeX[i])/2;
 				float factor = ((ballMiddle - padRightEdgeX) / (padLeftEdgeX - padRightEdgeX))*2 - 1;
 				factor = roundf(factor * 100) / 100;			
 										
-				ballVelocityY[j] = -ballVelocityY[j];		
-				ballVelocityX[j] = ballVelocityY[j] * factor;	
-
-				ballModel[j] = glm::translate(ballModel[j], glm::vec3(0.0f,-ballDeltaY[j],0.0f));
+				ballVelocityY[i] = -ballVelocityY[i];		
+				ballVelocityX[i] = ballVelocityY[i] * factor;	
+				ballPositionY[i] -= ballDeltaY[i];	
+				ballUpperEdgeY[i] -= ballDeltaY[i];
+				ballBottomEdgeY[i] -= ballDeltaY[i];			
 			}
 		}	
-		/* Zderzenia piłeczki z przeszkodami */
-		for(int i=0; i<levelColumns * levelRows; i++)
+		for(int j=0; j<levelColumns * levelRows; j++)
 		{
-			if(levelBlocks[i]->canDraw())
+			if(levelBlocks[j]->canDraw())
 			{
-				if(ballBottomEdgeY[j] < levelBlocks[i]->getUpperEdgeY() && ballUpperEdgeY[j] > levelBlocks[i]->getBottomEdgeY())
+				if(ballBottomEdgeY[i] < levelBlocks[j]->getUpperEdgeY() && ballUpperEdgeY[i] > levelBlocks[j]->getBottomEdgeY())
 				{	
-					if(ballRightEdgeX[j] < levelBlocks[i]->getLeftEdgeX() && ballLeftEdgeX[j] > levelBlocks[i]->getRightEdgeX())
+					if(ballRightEdgeX[i] < levelBlocks[j]->getLeftEdgeX() && ballLeftEdgeX[i] > levelBlocks[j]->getRightEdgeX())
 					{					
-						float delta = levelBlocks[i]->getLeftEdgeX() - ballRightEdgeX[j];
-						if(ballLeftEdgeX[j] - levelBlocks[i]->getRightEdgeX() < delta)
-							delta = ballLeftEdgeX[j] - levelBlocks[i]->getRightEdgeX();					
+						float delta = levelBlocks[j]->getLeftEdgeX() - ballRightEdgeX[i];
+						if(ballLeftEdgeX[i] - levelBlocks[j]->getRightEdgeX() < delta)
+							delta = ballLeftEdgeX[i] - levelBlocks[j]->getRightEdgeX();					
 
-						if(delta > 0.5 || ballVelocityX[j] == 0.0f)
-						{
-							ballModel[j] = glm::translate(ballModel[j], glm::vec3(0.0f,-ballDeltaY[j],0.0f));
-							ballVelocityY[j] = -ballVelocityY[j];
+						if(delta > 0.5 || ballVelocityX[i] == 0.0f)
+						{							
+							ballVelocityY[i] = -ballVelocityY[i];
+							ballPositionY[i] -= ballDeltaY[i];
+							ballUpperEdgeY[i] -= ballDeltaY[i];
+							ballBottomEdgeY[i] -= ballDeltaY[i];
 						}
 						else
-						{
-							ballModel[j] = glm::translate(ballModel[j], glm::vec3(-ballDeltaX[j],0.0f,0.0f));
-							ballVelocityX[j] = -ballVelocityX[j];
+						{							
+							ballVelocityX[i] = -ballVelocityX[i];
+							ballPositionX[i] -= ballDeltaX[i];
+							ballLeftEdgeX[i] += ballDeltaX[i];
+							ballRightEdgeX[i] += ballDeltaX[i];
 						}
 												
-						levelBlocks[i]->hit();
+						levelBlocks[j]->hit();
 						break;
 					}
 				}			
 			}
-		}	
-	}
+		}			
+
+		ballModel[i] = glm::mat4(1.0f);
+		ballModel[i] = glm::translate(ballModel[i], glm::vec3(ballPositionX[i],ballPositionY[i],0.0f));
+		ballModel[i] = glm::scale(ballModel[i], glm::vec3(0.7f,0.7f,0.7f));
+	}													
 
 	for(int i=0;i<3;i++)
 	{
 		drawSphere(P,V,ballModel[i], glm::vec4(1.0f,0.0f,1.0f,1.0f),wall0, wall1);	
 	}	
-	drawCube(P,V, padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f),pad0, pad1);
+
+	drawCube(P,V,padModel, glm::vec4(1.0f,0.0f,0.0f,1.0f),pad0, pad1);
     drawCube(P,V,upperWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f),wall0, wall1);	 
     drawCube(P,V,leftWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f),wall0, wall1);	
     drawCube(P,V,rightWallModel, glm::vec4(1.0f,1.0f,0.0f,1.0f),wall0, wall1);
@@ -502,14 +513,14 @@ int main(){
     glViewport(0, 0, WIDTH, HEIGHT);
 
     initOpenGLProgram(window);  
-
-	float padDeltaX = 0.0f; 
-	float ballDeltaX[] = {0.0f,0.0f,0.0f};     
-	float ballDeltaY[] = {0.0f,0.0f,0.0f}; 	    		
+	 
+	float ballDeltaX[] =  {0.0f,0.0f,0.0f}; 
+	float ballDeltaY[] = {0.0f,0.0f,0.0f} ;
+	float padDeltaX = 0.0f;	    		
 
     while(!glfwWindowShouldClose(window))
     {        		
-		padDeltaX = glfwGetTime() * padVelocityX;
+		padDeltaX = glfwGetTime() * padVelocityX;		
 
 		for(int i=0;i<3;i++)
 		{	
