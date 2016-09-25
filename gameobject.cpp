@@ -69,8 +69,6 @@ void GameObject::DrawObject()
 	assignVBOtoAttribute(shaderProgram, "texCoord0", bufTexCoords, 2);
 
 	glBindVertexArray(0);
-
-	shaderProgram->use();
 		
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("P"),1, false, glm::value_ptr(perspective));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"),1, false, glm::value_ptr(view));

@@ -74,8 +74,8 @@ void freeOpenGLProgram()
 void generateLevelBlocks()
 {
 	GameObjectVertices* cube = new GameObjectVertices("cube.obj");
-	GLuint metal = readTexture("metal.png");
-	GLuint metalSpec = readTexture("metal_spec.png");
+	GLuint metal = readTexture("brick.png");
+	GLuint metalSpec = readTexture("brick_spec.png");
 
 	for(int i=0; i< levelRows; i++)
 	{
@@ -93,7 +93,8 @@ void initOpenGLProgram(GLFWwindow *window)
     glEnable(GL_DEPTH_TEST);
     glfwSetKeyCallback(window, key_callback);
 
-    shaderProgram = new ShaderProgram("vshader.txt", NULL, "fshader.txt");	
+    shaderProgram = new ShaderProgram("vshader.txt", NULL, "fshader.txt");
+	shaderProgram->use();	
 
 	GameObjectVertices* cube = new GameObjectVertices("cube.obj");	
 	GameObjectVertices* sphere = new GameObjectVertices("sphere.obj");	
@@ -213,7 +214,7 @@ void drawScene(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ba
 			levelBlocks[i]->DrawObject();
 		}
     }
-
+	
 	glfwSwapBuffers(window);
 }
 int main()

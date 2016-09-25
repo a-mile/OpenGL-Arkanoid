@@ -1,6 +1,5 @@
 #version 330 core
 
-in vec4 ourColor;
 in vec4 vN; 
 in vec4 vV; 
 in vec4 vL0; 
@@ -21,8 +20,6 @@ void main()
 	vec4 mR0=reflect(-mL0,mN);
 	vec4 mR1=reflect(-mL1,mN); //oblicz wektor odbity w przestrzeni oka
 
-    //vec4 Md = vec4(1,0,1,1);
-    //vec4 Ms = vec4(1,0,1,1);
 	vec4 Md=texture(textureMap0,iTexCoord0);
 	vec4 Ms=texture(textureMap1,iTexCoord0);
     vec4 Ma=vec4(0,0,0,1); //Kolor materialu dla swiatla otoczenia
