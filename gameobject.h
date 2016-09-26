@@ -39,6 +39,7 @@ class GameObject
         float rightEdgeX;
         float upperEdgeY;
         float bottomEdgeY;
+        bool show;
 
         GameObject(GameObjectVertices* gameObjectVertices, GLuint texture0, GLuint texture1,
          glm::vec3 position, glm::vec3 scale, glm::mat4 view, glm::mat4 perspective, ShaderProgram *shaderProgram);

@@ -12,6 +12,24 @@
 #include "gameobject.h"
 #include "block.h"
 
+void RunGame(GLFWwindow *window);
+void MenuControl(GLFWwindow *window, int key, int scancode, int action, int mode);
+void GameControl(GLFWwindow *window, int key, int scancode, int action, int mode);
+void WinControl(GLFWwindow *window, int key, int scancode, int action, int mode);
+void LooseControl(GLFWwindow *window, int key, int scancode, int action, int mode);
+void freeOpenGLProgram();
+void generateLevelBlocks();
+void initOpenGLProgram(GLFWwindow *window);
+void drawScene(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ballDeltaY[]);
+
+enum gameState
+{
+	menu, game, win, loose
+};
+
+gameState state = menu;
+bool pause = false;
+
 const GLuint WIDTH = 1024, HEIGHT = 768;
 const int ballCount = 3;
 const int levelColumns = 7;
@@ -30,7 +48,7 @@ GameObject *ground;
 GameObject *pad;
 GameObject *balls[ballCount];
 
-Block* levelBlocks[levelColumns * levelRows];
+GameObject* levelBlocks[levelColumns * levelRows];
 
 glm::mat4 P = glm::perspective(45.0f, (float)WIDTH / (float)HEIGHT, 0.2f, 200.0f);
 glm::mat4 V = glm::lookAt(
@@ -40,52 +58,117 @@ glm::mat4 V = glm::lookAt(
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
-    if (action == GLFW_PRESS)
-    {
-	if (key == GLFW_KEY_ESCAPE)
-	    glfwSetWindowShouldClose(window, GL_TRUE);
-	if (key == GLFW_KEY_LEFT)
+	switch (state)
 	{
-	    padVelocityX = 30;
-	}
-	if (key == GLFW_KEY_RIGHT)
-	{
-	    padVelocityX = -30;
-	}
-    }
-    if (action == GLFW_RELEASE)
-    {
-	padVelocityX = 0;
-    }
-}
-void freeOpenGLProgram()
-{
-    delete shaderProgram;
-	delete leftWall;
-	delete rightWall;
-	delete upperWall;
-	delete ground;
-	delete pad;
-	for(int i=0; i< ballCount; i++)
-	{
-		delete balls[i];
+		case menu:
+			MenuControl(window,key,scancode,action,mode);
+			break;
+		case game:
+			GameControl(window,key,scancode,action,mode);
+			break;
+		case win:
+			WinControl(window,key,scancode,action,mode);
+			break;
+		case loose:
+			LooseControl(window,key,scancode,action,mode);
+			break;
 	}
 }
-void generateLevelBlocks()
+void GameControl(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
-	GameObjectVertices* cube = new GameObjectVertices("cube.obj");
-	GLuint metal = readTexture("brick.png");
-	GLuint metalSpec = readTexture("brick_spec.png");
-
-	for(int i=0; i< levelRows; i++)
-	{
-		for(int j=0; j< levelColumns; j++)
+	if (action == GLFW_PRESS)
+    {
+		if (key == GLFW_KEY_ESCAPE)
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		if (key == GLFW_KEY_LEFT)
 		{
-			Block* levelBlock = new Block(cube, metal, metalSpec,
-			      glm::vec3(21.0f - 7.0f * j,23.8f - 2.0f * i,0.0f), glm::vec3(6.5f, 1.0f, 1.0f), V, P, shaderProgram);		
-			levelBlocks[levelColumns * i + j] = levelBlock;	
+			padVelocityX = 30;
+		}
+		if (key == GLFW_KEY_RIGHT)
+		{
+			padVelocityX = -30;
+		}
+		if (key == GLFW_KEY_P)
+		{
+			pause = !pause;
 		}
 	}
+	if (action == GLFW_RELEASE)
+	{
+		padVelocityX = 0;
+    }
+}
+void MenuControl(GLFWwindow *window, int key, int scancode, int action, int mode)
+{
+	if (action == GLFW_PRESS)
+    {
+		state = game;
+		glfwSetTime(0);
+	}	
+}
+void WinControl(GLFWwindow *window, int key, int scancode, int action, int mode)
+{
+
+}
+void LooseControl(GLFWwindow *window, int key, int scancode, int action, int mode)
+{
+
+}
+int main()
+{
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
+
+    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "OpenGL-Arkanoid", nullptr, nullptr);
+    if (window == nullptr)
+    {
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return -1;
+    }
+    glfwMakeContextCurrent(window);
+
+    glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK)
+    {
+		std::cout << "Failed to initialize GLEW" << std::endl;
+		return -1;
+    }
+ 
+    glViewport(0, 0, WIDTH, HEIGHT);
+
+    initOpenGLProgram(window);
+
+    while (!glfwWindowShouldClose(window))
+    {
+		switch (state)
+		{
+			case menu :
+				//DrawMenu(); 
+				break;
+			case game : 
+				RunGame(window);
+				break;
+			case win : 
+				//DrawWinStatement();
+				break;
+			case loose : 
+				//DrawLooseStatement();
+				break;
+		}
+		
+		glfwPollEvents();
+    }
+
+    freeOpenGLProgram();
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return 0;
 }
 void initOpenGLProgram(GLFWwindow *window)
 {
@@ -123,6 +206,45 @@ void initOpenGLProgram(GLFWwindow *window)
 
 	generateLevelBlocks();
 }
+void generateLevelBlocks()
+{
+	GameObjectVertices* cube = new GameObjectVertices("cube.obj");
+	GLuint metal = readTexture("brick.png");
+	GLuint metalSpec = readTexture("brick_spec.png");
+
+	for(int i=0; i< levelRows; i++)
+	{
+		for(int j=0; j< levelColumns; j++)
+		{
+			GameObject* levelBlock = new GameObject(cube, metal, metalSpec,
+			      glm::vec3(21.0f - 7.0f * j,23.8f - 2.0f * i,0.0f), glm::vec3(6.5f, 1.0f, 1.0f), V, P, shaderProgram);		
+			levelBlocks[levelColumns * i + j] = levelBlock;	
+		}
+	}
+}
+void RunGame(GLFWwindow *window)
+{
+	float padDeltaX = glfwGetTime() * padVelocityX;
+	if(pause)
+		padDeltaX = 0.0f;
+	float ballDeltaX[ballCount];
+    float ballDeltaY[ballCount]; 
+
+	for (int i = 0; i < ballCount; i++)
+	{
+		ballDeltaX[i] = glfwGetTime() * ballVelocityX[i];
+		ballDeltaY[i] = glfwGetTime() * ballVelocityY[i];
+		if(pause)
+		{
+			ballDeltaX[i] = 0.0f;
+			ballDeltaY[i] = 0.0f;
+		}
+	}
+
+	glfwSetTime(0);
+
+	drawScene(window, padDeltaX, ballDeltaX, ballDeltaY);	
+}
 void drawScene(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ballDeltaY[])
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -136,70 +258,85 @@ void drawScene(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ba
 
     for (int i = 0; i < ballCount; i++)
     {
-		balls[i]->MoveHorizontal(ballDeltaX[i]);
-		balls[i]->MoveVertical(ballDeltaY[i]);
-
-		if (balls[i]->leftEdgeX > leftWall->rightEdgeX || balls[i]->rightEdgeX < rightWall->leftEdgeX)
+		if(balls[i]->show)
 		{
-			ballVelocityX[i] = -ballVelocityX[i];
-			balls[i]->MoveHorizontal(-ballDeltaX[i]);
-		}
-		if (balls[i]->upperEdgeY > upperWall->bottomEdgeY)
-		{
-			ballVelocityY[i] = -ballVelocityY[i];
-			balls[i]->MoveVertical(-ballDeltaY[i]);
-		}
-		if (balls[i]->rightEdgeX < pad->leftEdgeX && balls[i]->leftEdgeX > pad->rightEdgeX && 
-			balls[i]->bottomEdgeY < pad->upperEdgeY && balls[i]->upperEdgeY > pad->upperEdgeY)
-		{
-			float ballMiddle = (balls[i]->leftEdgeX + balls[i]->rightEdgeX) / 2;
-			float factor = ((ballMiddle - pad->rightEdgeX) / (pad->leftEdgeX - pad->rightEdgeX)) * 2 - 1;
-			factor = roundf(factor * 100) / 100;
+			balls[i]->MoveHorizontal(ballDeltaX[i]);
+			balls[i]->MoveVertical(ballDeltaY[i]);
 
-			ballVelocityY[i] = -ballVelocityY[i];
-			ballVelocityX[i] = ballVelocityY[i] * factor;
-
-			balls[i]->MoveVertical(-ballDeltaY[i]);
-		}
-
-		for (int j = 0; j < levelColumns * levelRows; j++)
-		{
-			if (!levelBlocks[j]->destroyed)
+			if(balls[i]->upperEdgeY < pad->bottomEdgeY)
 			{
-				if ((balls[i]->bottomEdgeY < levelBlocks[j]->upperEdgeY && balls[i]->upperEdgeY > levelBlocks[j]->upperEdgeY) ||
-					(balls[i]->upperEdgeY > levelBlocks[j]->bottomEdgeY && balls[i]->bottomEdgeY < levelBlocks[j]->bottomEdgeY))
+				balls[i]->show = false;
+				continue;
+			}
+			if (balls[i]->leftEdgeX > leftWall->rightEdgeX || balls[i]->rightEdgeX < rightWall->leftEdgeX)
+			{
+				ballVelocityX[i] = -ballVelocityX[i];
+				balls[i]->MoveHorizontal(-ballDeltaX[i]);
+			}
+			if (balls[i]->upperEdgeY > upperWall->bottomEdgeY)
+			{
+				ballVelocityY[i] = -ballVelocityY[i];
+				balls[i]->MoveVertical(-ballDeltaY[i]);
+			}
+			if (balls[i]->rightEdgeX < pad->leftEdgeX && balls[i]->leftEdgeX > pad->rightEdgeX && 
+				balls[i]->bottomEdgeY < pad->upperEdgeY && balls[i]->upperEdgeY > pad->upperEdgeY)
+			{
+				float ballMiddle = (balls[i]->leftEdgeX + balls[i]->rightEdgeX) / 2;
+				float factor = ((ballMiddle - pad->rightEdgeX) / (pad->leftEdgeX - pad->rightEdgeX)) * 2 - 1;
+				factor = roundf(factor * 100) / 100;
+
+				ballVelocityY[i] = -ballVelocityY[i];
+				ballVelocityX[i] = ballVelocityY[i] * factor;
+
+				balls[i]->MoveVertical(-ballDeltaY[i]);
+			}
+
+			for (int j = 0; j < levelColumns * levelRows; j++)
+			{
+				if (levelBlocks[j]->show)
 				{
-					if (balls[i]->leftEdgeX < levelBlocks[j]->leftEdgeX && balls[i]->rightEdgeX > levelBlocks[j]->rightEdgeX)
+					if ((balls[i]->bottomEdgeY < levelBlocks[j]->upperEdgeY && balls[i]->upperEdgeY > levelBlocks[j]->upperEdgeY) ||
+						(balls[i]->upperEdgeY > levelBlocks[j]->bottomEdgeY && balls[i]->bottomEdgeY < levelBlocks[j]->bottomEdgeY))
 					{
-						ballVelocityY[i] = -ballVelocityY[i];
-						balls[i]->MoveVertical(-ballDeltaY[i]);
-						levelBlocks[j]->destroyed = true;
-						break;
-					}
-					if (balls[i]->rightEdgeX < levelBlocks[j]->leftEdgeX && balls[i]->leftEdgeX > levelBlocks[j]->rightEdgeX)
-					{
-						if (ballVelocityX[i] < 2)
+						if (balls[i]->leftEdgeX < levelBlocks[j]->leftEdgeX && balls[i]->rightEdgeX > levelBlocks[j]->rightEdgeX)
 						{
 							ballVelocityY[i] = -ballVelocityY[i];
-							balls[i]->MoveVertical(-ballDeltaY[i]);							
+							balls[i]->MoveVertical(-ballDeltaY[i]);
+							levelBlocks[j]->show = false;
+							break;
 						}
-						else
+						if (balls[i]->rightEdgeX < levelBlocks[j]->leftEdgeX && balls[i]->leftEdgeX > levelBlocks[j]->rightEdgeX)
 						{
-							ballVelocityX[i] = -ballVelocityX[i];
-							balls[i]->MoveHorizontal(-ballDeltaX[i]);
+							if (ballVelocityX[i] < 2)
+							{
+								ballVelocityY[i] = -ballVelocityY[i];
+								balls[i]->MoveVertical(-ballDeltaY[i]);							
+							}
+							else
+							{
+								ballVelocityX[i] = -ballVelocityX[i];
+								balls[i]->MoveHorizontal(-ballDeltaX[i]);
+							}
+							levelBlocks[j]->show = false;
+							break;
 						}
-						levelBlocks[j]->destroyed = true;
-						break;
-		    		}
+					}
 				}
-	    	}
+			}
 		}		
     }
 
+	bool isAnyBall = false;
     for (int i = 0; i < ballCount; i++)
     {
-		balls[i]->DrawObject();
+		if(balls[i]->show)
+		{
+			balls[i]->DrawObject();
+			isAnyBall = true;
+		}
     }
+	if(!isAnyBall)
+		state = loose;
 
 	pad->DrawObject();
 	upperWall->DrawObject();
@@ -207,74 +344,30 @@ void drawScene(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ba
 	rightWall->DrawObject();
 	ground->DrawObject();    
 	
+	bool isAnyBlock = false;
     for (int i = 0; i < levelColumns * levelRows; i++)
     {
-		if (!levelBlocks[i]->destroyed)
+		if (levelBlocks[i]->show)
 		{
 			levelBlocks[i]->DrawObject();
+			isAnyBlock = true;
 		}
     }
+	if(!isAnyBlock)
+		state = win;
 	
 	glfwSwapBuffers(window);
 }
-int main()
+void freeOpenGLProgram()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
-
-    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "OpenGL-Arkanoid", nullptr, nullptr);
-    if (window == nullptr)
-    {
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-    }
-    glfwMakeContextCurrent(window);
-
-    glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK)
-    {
-		std::cout << "Failed to initialize GLEW" << std::endl;
-		return -1;
-    }
-
-    glViewport(0, 0, WIDTH, HEIGHT);
-
-    initOpenGLProgram(window);
-
-    float ballDeltaX[ballCount];
-    float ballDeltaY[ballCount]; 
-    float padDeltaX = 0.0f;
-	for(int i=0; i<ballCount; i++)
+    delete shaderProgram;
+	delete leftWall;
+	delete rightWall;
+	delete upperWall;
+	delete ground;
+	delete pad;
+	for(int i=0; i< ballCount; i++)
 	{
-		ballDeltaX[i] = 0.0f;
-		ballDeltaY[i] = 0.0f;
+		delete balls[i];
 	}
-
-    while (!glfwWindowShouldClose(window))
-    {
-		padDeltaX = glfwGetTime() * padVelocityX;
-
-		for (int i = 0; i < ballCount; i++)
-		{
-			ballDeltaX[i] = glfwGetTime() * ballVelocityX[i];
-			ballDeltaY[i] = glfwGetTime() * ballVelocityY[i];
-		}
-
-		glfwSetTime(0);
-
-		drawScene(window, padDeltaX, ballDeltaX, ballDeltaY);
-
-		glfwPollEvents();
-    }
-
-    freeOpenGLProgram();
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 0;
 }
