@@ -12,15 +12,15 @@
 #include "gameobject.h"
 #include "block.h"
 
-void RunGame(GLFWwindow *window);
-void MenuControl(GLFWwindow *window, int key, int scancode, int action, int mode);
-void GameControl(GLFWwindow *window, int key, int scancode, int action, int mode);
-void WinControl(GLFWwindow *window, int key, int scancode, int action, int mode);
-void LooseControl(GLFWwindow *window, int key, int scancode, int action, int mode);
+void runGame(GLFWwindow *window);
+void menuControl(GLFWwindow *window, int key, int scancode, int action, int mode);
+void gameControl(GLFWwindow *window, int key, int scancode, int action, int mode);
+void winControl(GLFWwindow *window, int key, int scancode, int action, int mode);
+void looseControl(GLFWwindow *window, int key, int scancode, int action, int mode);
 void freeOpenGLProgram();
 void generateLevelBlocks();
 void initOpenGLProgram(GLFWwindow *window);
-void drawScene(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ballDeltaY[]);
+void drawSceneAndDetectCollisions(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ballDeltaY[]);
 
 enum gameState
 {
@@ -61,20 +61,20 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 	switch (state)
 	{
 		case menu:
-			MenuControl(window,key,scancode,action,mode);
+			menuControl(window,key,scancode,action,mode);
 			break;
 		case game:
-			GameControl(window,key,scancode,action,mode);
+			gameControl(window,key,scancode,action,mode);
 			break;
 		case win:
-			WinControl(window,key,scancode,action,mode);
+			winControl(window,key,scancode,action,mode);
 			break;
 		case loose:
-			LooseControl(window,key,scancode,action,mode);
+			looseControl(window,key,scancode,action,mode);
 			break;
 	}
 }
-void GameControl(GLFWwindow *window, int key, int scancode, int action, int mode)
+void gameControl(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
 	if (action == GLFW_PRESS)
     {
@@ -98,7 +98,7 @@ void GameControl(GLFWwindow *window, int key, int scancode, int action, int mode
 		padVelocityX = 0;
     }
 }
-void MenuControl(GLFWwindow *window, int key, int scancode, int action, int mode)
+void menuControl(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
 	if (action == GLFW_PRESS)
     {
@@ -106,11 +106,11 @@ void MenuControl(GLFWwindow *window, int key, int scancode, int action, int mode
 		glfwSetTime(0);
 	}	
 }
-void WinControl(GLFWwindow *window, int key, int scancode, int action, int mode)
+void winControl(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
 
 }
-void LooseControl(GLFWwindow *window, int key, int scancode, int action, int mode)
+void looseControl(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
 
 }
@@ -152,7 +152,7 @@ int main()
 				//DrawMenu(); 
 				break;
 			case game : 
-				RunGame(window);
+				runGame(window);
 				break;
 			case win : 
 				//DrawWinStatement();
@@ -222,7 +222,7 @@ void generateLevelBlocks()
 		}
 	}
 }
-void RunGame(GLFWwindow *window)
+void runGame(GLFWwindow *window)
 {
 	float padDeltaX = glfwGetTime() * padVelocityX;
 	if(pause)
@@ -243,9 +243,9 @@ void RunGame(GLFWwindow *window)
 
 	glfwSetTime(0);
 
-	drawScene(window, padDeltaX, ballDeltaX, ballDeltaY);	
+	drawSceneAndDetectCollisions(window, padDeltaX, ballDeltaX, ballDeltaY);	
 }
-void drawScene(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ballDeltaY[])
+void drawSceneAndDetectCollisions(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ballDeltaY[])
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
