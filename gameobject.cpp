@@ -64,6 +64,8 @@ void GameObject::DrawObject()
 {
     CalculateModel();
 
+	shaderProgram->use();	
+
     glBindVertexArray(vao);
 
 	assignVBOtoAttribute(shaderProgram,"position",bufVertices,3); 	

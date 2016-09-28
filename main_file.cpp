@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
 #include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <math.h>
 
 #include "shaderprogram.h"
 #include "gameobject.h"
-#include "block.h"
+#include "text2D.h"
 
 void runGame(GLFWwindow *window);
 void menuControl(GLFWwindow *window, int key, int scancode, int action, int mode);
@@ -21,6 +21,7 @@ void freeOpenGLProgram();
 void generateLevelBlocks();
 void initOpenGLProgram(GLFWwindow *window);
 void drawSceneAndDetectCollisions(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ballDeltaY[]);
+void drawMenu(GLFWwindow *window);
 
 enum gameState
 {
@@ -140,7 +141,7 @@ int main()
 		return -1;
     }
  
-    glViewport(0, 0, WIDTH, HEIGHT);
+    //glViewport(0, 0, WIDTH, HEIGHT);
 
     initOpenGLProgram(window);
 
@@ -149,16 +150,18 @@ int main()
 		switch (state)
 		{
 			case menu :
-				//DrawMenu(); 
+				drawMenu(window); 
 				break;
 			case game : 
 				runGame(window);
 				break;
 			case win : 
 				//DrawWinStatement();
+				drawMenu(window);
 				break;
 			case loose : 
 				//DrawLooseStatement();
+				drawMenu(window);
 				break;
 		}
 		
@@ -172,12 +175,15 @@ int main()
 }
 void initOpenGLProgram(GLFWwindow *window)
 {
-    glClearColor(0, 0, 1, 1);
+    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
     glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS); 
+	glEnable(GL_CULL_FACE);
     glfwSetKeyCallback(window, key_callback);
+	
+	initText2D( "text.png" );
 
     shaderProgram = new ShaderProgram("vshader.txt", NULL, "fshader.txt");
-	shaderProgram->use();	
 
 	GameObjectVertices* cube = new GameObjectVertices("cube.obj");	
 	GameObjectVertices* sphere = new GameObjectVertices("sphere.obj");	
@@ -218,6 +224,8 @@ void generateLevelBlocks()
 		{
 			GameObject* levelBlock = new GameObject(cube, metal, metalSpec,
 			      glm::vec3(21.0f - 7.0f * j,23.8f - 2.0f * i,0.0f), glm::vec3(6.5f, 1.0f, 1.0f), V, P, shaderProgram);		
+		    if(i%2 == 0 && j%2 != 0)
+				levelBlock->show = false;
 			levelBlocks[levelColumns * i + j] = levelBlock;	
 		}
 	}
@@ -355,9 +363,21 @@ void drawSceneAndDetectCollisions(GLFWwindow *window, float padDeltaX, float bal
     }
 	if(!isAnyBlock)
 		state = win;
+
+	if(pause)
+		printText2D("PAUSE", 250, 300, 60);	
 	
 	glfwSwapBuffers(window);
 }
+void drawMenu(GLFWwindow *window)
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	printText2D("Press any key to start ...", 130, 300, 20);		
+
+	glfwSwapBuffers(window);
+}
+
 void freeOpenGLProgram()
 {
     delete shaderProgram;
