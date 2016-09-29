@@ -16,16 +16,18 @@ void runGame(GLFWwindow *window);
 void menuControl(GLFWwindow *window, int key, int scancode, int action, int mode);
 void gameControl(GLFWwindow *window, int key, int scancode, int action, int mode);
 void winControl(GLFWwindow *window, int key, int scancode, int action, int mode);
-void looseControl(GLFWwindow *window, int key, int scancode, int action, int mode);
+void loseControl(GLFWwindow *window, int key, int scancode, int action, int mode);
 void freeOpenGLProgram();
 void generateLevelBlocks();
-void initOpenGLProgram(GLFWwindow *window);
+void initOpenGLProgram();
 void drawSceneAndDetectCollisions(GLFWwindow *window, float padDeltaX, float ballDeltaX[], float ballDeltaY[]);
 void drawMenu(GLFWwindow *window);
+void drawWIN(GLFWwindow *window);
+void drawLOSE(GLFWwindow *window);
 
 enum gameState
 {
-	menu, game, win, loose
+	menu, game, win, lose
 };
 
 gameState state = menu;
@@ -70,8 +72,8 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 		case win:
 			winControl(window,key,scancode,action,mode);
 			break;
-		case loose:
-			looseControl(window,key,scancode,action,mode);
+		case lose:
+			loseControl(window,key,scancode,action,mode);
 			break;
 	}
 }
@@ -80,7 +82,10 @@ void gameControl(GLFWwindow *window, int key, int scancode, int action, int mode
 	if (action == GLFW_PRESS)
     {
 		if (key == GLFW_KEY_ESCAPE)
+		{
 			glfwSetWindowShouldClose(window, GL_TRUE);
+			return;
+		}
 		if (key == GLFW_KEY_LEFT)
 		{
 			padVelocityX = 30;
@@ -93,6 +98,11 @@ void gameControl(GLFWwindow *window, int key, int scancode, int action, int mode
 		{
 			pause = !pause;
 		}
+		if( key == GLFW_KEY_R)
+		{
+			initOpenGLProgram();
+			glfwSetTime(0);
+		}
 	}
 	if (action == GLFW_RELEASE)
 	{
@@ -103,17 +113,42 @@ void menuControl(GLFWwindow *window, int key, int scancode, int action, int mode
 {
 	if (action == GLFW_PRESS)
     {
+		if (key == GLFW_KEY_ESCAPE)
+		{
+			glfwSetWindowShouldClose(window, GL_TRUE);
+			return;
+		}
 		state = game;
 		glfwSetTime(0);
 	}	
 }
 void winControl(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
-
+	if (action == GLFW_PRESS)
+    {
+		if (key == GLFW_KEY_ESCAPE)
+		{
+				glfwSetWindowShouldClose(window, GL_TRUE);
+				return;
+		}
+		initOpenGLProgram();
+		state = game;
+		glfwSetTime(0);
+	}
 }
-void looseControl(GLFWwindow *window, int key, int scancode, int action, int mode)
+void loseControl(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
-
+	if (action == GLFW_PRESS)
+    {
+		if (key == GLFW_KEY_ESCAPE)
+		{
+				glfwSetWindowShouldClose(window, GL_TRUE);
+				return;
+		}
+		initOpenGLProgram();
+		state = game;
+		glfwSetTime(0);
+	}
 }
 int main()
 {
@@ -142,8 +177,8 @@ int main()
     }
  
     //glViewport(0, 0, WIDTH, HEIGHT);
-
-    initOpenGLProgram(window);
+	glfwSetKeyCallback(window, key_callback);
+    initOpenGLProgram();
 
     while (!glfwWindowShouldClose(window))
     {
@@ -155,13 +190,11 @@ int main()
 			case game : 
 				runGame(window);
 				break;
-			case win : 
-				//DrawWinStatement();
-				drawMenu(window);
+			case win : 				
+				drawWIN(window);
 				break;
-			case loose : 
-				//DrawLooseStatement();
-				drawMenu(window);
+			case lose : 				
+				drawLOSE(window);
 				break;
 		}
 		
@@ -173,13 +206,13 @@ int main()
     glfwTerminate();
     return 0;
 }
-void initOpenGLProgram(GLFWwindow *window)
+void initOpenGLProgram()
 {
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
     glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); 
 	glEnable(GL_CULL_FACE);
-    glfwSetKeyCallback(window, key_callback);
+    
 	
 	initText2D( "text.png" );
 
@@ -344,7 +377,7 @@ void drawSceneAndDetectCollisions(GLFWwindow *window, float padDeltaX, float bal
 		}
     }
 	if(!isAnyBall)
-		state = loose;
+		state = lose;
 
 	pad->DrawObject();
 	upperWall->DrawObject();
@@ -366,6 +399,10 @@ void drawSceneAndDetectCollisions(GLFWwindow *window, float padDeltaX, float bal
 
 	if(pause)
 		printText2D("PAUSE", 250, 300, 60);	
+
+	printText2D("esc - exit", 10, 570, 20);	
+	printText2D("p - pause", 10, 550, 20);	
+	printText2D("r - restart", 10, 530, 20);	
 	
 	glfwSwapBuffers(window);
 }
@@ -374,6 +411,24 @@ void drawMenu(GLFWwindow *window)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	printText2D("Press any key to start ...", 130, 300, 20);		
+
+	glfwSwapBuffers(window);
+}
+void drawWIN(GLFWwindow *window)
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	printText2D("You win !", 100, 300, 60);
+	printText2D("Press any key to restart or esc to exit", 100, 250, 15);
+
+	glfwSwapBuffers(window);
+}
+void drawLOSE(GLFWwindow *window)
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	printText2D("You lose !", 100, 300, 60);
+	printText2D("Press any key to restart or esc to exit", 100, 250, 15);
 
 	glfwSwapBuffers(window);
 }
